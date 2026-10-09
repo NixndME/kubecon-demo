@@ -273,7 +273,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Ordered\" [$__range]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and (reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\" or (reason=\"Started\" and name=~\"ollama-.+\"))) | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if eq .reason \"Started\" }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Ordered\" [$__range]))",
           "refId": "A",
           "queryType": "instant",
           "legendFormat": ""
@@ -333,7 +333,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Removed\" [$__range]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and (reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\" or (reason=\"Started\" and name=~\"ollama-.+\"))) | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if eq .reason \"Started\" }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Removed\" [$__range]))",
           "refId": "A",
           "queryType": "instant",
           "legendFormat": ""
@@ -466,7 +466,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Ordered\" [$__interval]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and (reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\" or (reason=\"Started\" and name=~\"ollama-.+\"))) | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if eq .reason \"Started\" }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Ordered\" [$__interval]))",
           "refId": "A",
           "queryType": "range",
           "legendFormat": "Ordered"
@@ -476,7 +476,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Removed\" [$__interval]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and (reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\" or (reason=\"Started\" and name=~\"ollama-.+\"))) | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if eq .reason \"Started\" }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Removed\" [$__interval]))",
           "refId": "B",
           "queryType": "range",
           "legendFormat": "Removed"
@@ -486,7 +486,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Waiting for GPU memory\" [$__interval]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and (reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\" or (reason=\"Started\" and name=~\"ollama-.+\"))) | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if eq .reason \"Started\" }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Waiting for GPU memory\" [$__interval]))",
           "refId": "C",
           "queryType": "range",
           "legendFormat": "Had to wait for GPU memory"
@@ -592,7 +592,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | line_format `{\"Chat\":\"{{ .chat }}\",\"What happened\":\"{{ .what }}\",\"Details\":\"{{ .msg | replace \"\\\"\" \"'\" | trunc 140 }}\"}`",
+          "expr": "{job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and (reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\" or (reason=\"Started\" and name=~\"ollama-.+\"))) | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if eq .reason \"Started\" }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | label_format detail=`{{ if eq .what \"Ordered\" }}Order approved. Argo CD is deploying the chat.{{ else if eq .what \"Ready\" }}The model server started.{{ else if eq .what \"Removed\" }}Removed from Morpheus. Its GPU memory is free again.{{ else if eq .what \"Waiting for GPU memory\" }}Not enough free GPU memory. It starts when another chat is removed.{{ else }}{{ .reason }}: {{ .msg | replace \"\\\"\" \"'\" | trunc 120 }}{{ end }}` | line_format `{\"Chat\":\"{{ .chat }}\",\"What happened\":\"{{ .what }}\",\"Details\":\"{{ .detail }}\"}`",
           "refId": "A",
           "queryType": "range",
           "legendFormat": ""
@@ -922,8 +922,8 @@
                 "Size",
                 "Age",
                 "Pods ready",
-                "GPU memory booked",
-                "GPU memory used",
+                "GPU booked",
+                "GPU used",
                 "CPU (cores)",
                 "Memory",
                 "Questions",
