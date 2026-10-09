@@ -95,7 +95,7 @@ reserved="argocd|grafana|chat|traefik|morpheus|k8s|ingress|www|admin|api|loki|pr
 in_name=$(upsert /api/library/option-types optionTypes name "AI first name" optionType "$(jq -n --arg d "$DOMAIN" --arg r "$reserved" '{optionType:{
   name:"AI first name", fieldName:"aiName", fieldLabel:"First name", type:"text", required:true, displayOrder:1,
   verifyPattern:("^(?!(" + $r + ")$)[a-z][a-z0-9]{1,14}$"), placeHolder:"jane",
-  helpBlock:("Lowercase letters or numbers. Your chat opens at https://<first name>." + $d)}}')")
+  helpBlock:"Lowercase letters or numbers. Your chat is named after it."}}')")
 in_email=$(upsert /api/library/option-types optionTypes name "AI owner email" optionType "$(jq -n '{optionType:{
   name:"AI owner email", fieldName:"aiEmail", fieldLabel:"Email", type:"text", required:true, displayOrder:2,
   verifyPattern:"^[a-z0-9._+-]+@[a-z0-9.-]+[.][a-z]{2,}$", placeHolder:"jane@example.com",
@@ -185,7 +185,7 @@ c_docs=$(upsert /api/catalog-item-types catalogItemTypes name "Chat with your do
   --argjson i0 "$in_name" --argjson i1 "$in_email" --argjson i2 "$in_team" --argjson i3 "$in_model" --argjson i4 "$in_pass" --argjson i5 "$in_size" --arg d "$DOMAIN" '{catalogItemType:{
   name:"Chat with your documents", type:"blueprint", blueprint:{id:$b}, appSpec:$s, optionTypes:[$i0,$i1,$i4,$i2,$i3,$i5],
   enabled:true, featured:true, visibility:"public",
-  description:"Upload your files and ask questions about them. Private, on a GPU in the HKS cluster.",
+  description:"Upload your files and ask questions about them.",
   content:("**What you get**\n\n- A chat page at **https://<first name>-docs." + $d + "**\n- Upload PDFs, Word files or text, then ask questions. Answers come from your files.\n- Your files never leave the cluster\n\n**How it works**\n\n1. Fill in the form and order. Medium size is best for documents.\n2. An admin approves.\n3. About 3 minutes later, open **Apps > ai-<first name>-docs** for the link. Log in with your email and password.\n4. In the chat box, click **+**, add a file, and ask about it.")}}')")
 c_remove=$(upsert /api/catalog-item-types catalogItemTypes name "Remove AI chat" catalogItemType "$(jq -n --argjson w "$w_remove" --argjson i "$in_chat" --argjson k "$in_confirm" '{catalogItemType:{
   name:"Remove AI chat", type:"workflow", workflow:{id:$w}, context:"appliance", optionTypes:[$i,$k],
