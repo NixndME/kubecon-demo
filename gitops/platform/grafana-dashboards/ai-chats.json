@@ -54,7 +54,7 @@
       "transparent": true,
       "options": {
         "mode": "markdown",
-        "content": "### Private AI chats on HKS\nEach chat is ordered from the Morpheus catalog, deployed by Argo CD and runs on one slice of the NVIDIA GPU. Numbers below follow the time range at the top right."
+        "content": "### Private AI chats on HKS\nEach chat is ordered from the Morpheus catalog and deployed by Argo CD. It gets its own share of GPU memory (Small 3 GB, Medium 5 GB, Large 8 GB), enforced by HAMi. Numbers follow the time range at the top right."
       }
     },
     {
@@ -122,7 +122,7 @@
       "id": 3,
       "type": "stat",
       "title": "Starting or waiting",
-      "description": "Chats that are starting, or waiting for a free GPU slice.",
+      "description": "Chats that are starting, or waiting until enough GPU memory is free.",
       "gridPos": {
         "x": 4,
         "y": 2,
@@ -186,8 +186,8 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "GPU slices in use",
-      "description": "Out of 4 slices on the GPU. The main chat at chat.kubeforge.live holds one.",
+      "title": "GPU memory booked",
+      "description": "GPU memory promised to running chats, out of all GPU memory. The main chat at chat.kubeforge.live books 3 GB.",
       "gridPos": {
         "x": 8,
         "y": 2,
@@ -204,7 +204,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(kube_pod_container_resource_limits{resource=\"nvidia_com_gpu\"} * on(namespace, pod) group_left() (kube_pod_status_phase{phase=\"Running\"} == 1))",
+          "expr": "100 * sum(hami_gpu_memory_allocated_bytes) / sum(hami_gpu_memory_limit_bytes)",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -213,7 +213,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
+          "unit": "percent",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -223,11 +223,11 @@
               },
               {
                 "color": "orange",
-                "value": 3
+                "value": 70
               },
               {
                 "color": "red",
-                "value": 4
+                "value": 90
               }
             ]
           },
@@ -273,7 +273,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for a GPU slice{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Ordered\" [$__range]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Ordered\" [$__range]))",
           "refId": "A",
           "queryType": "instant",
           "legendFormat": ""
@@ -333,7 +333,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for a GPU slice{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Removed\" [$__range]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Removed\" [$__range]))",
           "refId": "A",
           "queryType": "instant",
           "legendFormat": ""
@@ -466,7 +466,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for a GPU slice{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Ordered\" [$__interval]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Ordered\" [$__interval]))",
           "refId": "A",
           "queryType": "range",
           "legendFormat": "Ordered"
@@ -476,7 +476,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for a GPU slice{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Removed\" [$__interval]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Removed\" [$__interval]))",
           "refId": "B",
           "queryType": "range",
           "legendFormat": "Removed"
@@ -486,10 +486,10 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for a GPU slice{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Waiting for a GPU slice\" [$__interval]))",
+          "expr": "sum(count_over_time({job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | what=\"Waiting for GPU memory\" [$__interval]))",
           "refId": "C",
           "queryType": "range",
-          "legendFormat": "Had to wait for a GPU slice"
+          "legendFormat": "Had to wait for GPU memory"
         }
       ],
       "fieldConfig": {
@@ -544,7 +544,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Had to wait for a GPU slice"
+              "options": "Had to wait for GPU memory"
             },
             "properties": [
               {
@@ -592,7 +592,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for a GPU slice{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | line_format `{\"Chat\":\"{{ .chat }}\",\"What happened\":\"{{ .what }}\",\"Details\":\"{{ .msg | replace \"\\\"\" \"'\" | trunc 140 }}\"}`",
+          "expr": "{job=\"events\"} | logfmt | (namespace=\"argocd\" and kind=\"Application\" and name=~\"ai-.+\" and name!=\"ai-chat\") or (namespace=~\"ai-.+\" and namespace!=\"ai-chat\" and reason=~\"FailedScheduling|BackOff|Failed|OOMKilling|Evicted\") | label_format chat=`{{ if eq .namespace \"argocd\" }}{{ .name }}{{ else }}{{ .namespace }}{{ end }}` | label_format what=`{{ if eq .reason \"ResourceDeleted\" }}Removed{{ else if hasPrefix \"Updated sync status:  ->\" .msg }}Ordered{{ else if hasSuffix \"Progressing -> Healthy\" .msg }}Ready{{ else if hasSuffix \"-> Degraded\" .msg }}Problem{{ else if eq .reason \"FailedScheduling\" }}Waiting for GPU memory{{ else if ne .namespace \"argocd\" }}Problem{{ else }}{{ end }}` | what != \"\" | line_format `{\"Chat\":\"{{ .chat }}\",\"What happened\":\"{{ .what }}\",\"Details\":\"{{ .msg | replace \"\\\"\" \"'\" | trunc 140 }}\"}`",
           "refId": "A",
           "queryType": "range",
           "legendFormat": ""
@@ -697,7 +697,7 @@
                         "color": "text",
                         "index": 2
                       },
-                      "Waiting for a GPU slice": {
+                      "Waiting for GPU memory": {
                         "color": "orange",
                         "index": 3
                       },
@@ -750,7 +750,7 @@
       "id": 12,
       "type": "table",
       "title": "Chats in the cluster now",
-      "description": "One row per chat. Click a chat name to open its page.",
+      "description": "One row per chat. GPU memory booked is its share; used is what its model takes now (an idle model is unloaded after 5 minutes). Click the page to open the chat.",
       "gridPos": {
         "x": 0,
         "y": 17,
@@ -811,10 +811,34 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum by (namespace, owner, model, team) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=~\".+\"} [15m]))",
+          "expr": "sum by (namespace, owner, model, team, size) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=~\".+\"} [15m]))",
           "refId": "E",
           "queryType": "instant",
           "legendFormat": ""
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (namespace) (hami_vgpu_memory_allocated_bytes{namespace=~\"ai-.+\", namespace!=\"ai-chat\"})",
+          "legendFormat": "",
+          "refId": "G",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (namespace) (hami_vgpu_memory_used_bytes{namespace=~\"ai-.+\", namespace!=\"ai-chat\"})",
+          "legendFormat": "",
+          "refId": "H",
+          "instant": true,
+          "range": false,
+          "format": "table"
         },
         {
           "datasource": {
@@ -840,7 +864,8 @@
               "namespace",
               "owner",
               "model",
-              "team"
+              "team",
+              "size"
             ]
           }
         },
@@ -858,21 +883,27 @@
               "namespace": 0,
               "owner": 1,
               "model": 2,
-              "team": 3,
-              "Value #A": 4,
-              "Value #B": 5,
-              "Value #C": 6,
-              "Value #D": 7,
-              "Value #F": 8,
-              "name": 9
+              "size": 3,
+              "team": 4,
+              "Value #A": 5,
+              "Value #B": 6,
+              "Value #G": 7,
+              "Value #H": 8,
+              "Value #C": 9,
+              "Value #D": 10,
+              "Value #F": 11,
+              "name": 12
             },
             "renameByName": {
               "namespace": "Chat",
               "owner": "Owner",
               "model": "Model",
+              "size": "Size",
               "team": "Team",
               "Value #A": "Age",
               "Value #B": "Pods ready",
+              "Value #G": "GPU booked",
+              "Value #H": "GPU used",
               "Value #C": "CPU (cores)",
               "Value #D": "Memory",
               "Value #F": "Questions",
@@ -888,9 +919,11 @@
                 "Chat",
                 "Owner",
                 "Model",
-                "Team",
+                "Size",
                 "Age",
                 "Pods ready",
+                "GPU memory booked",
+                "GPU memory used",
                 "CPU (cores)",
                 "Memory",
                 "Questions",
@@ -958,6 +991,50 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "GPU booked"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU used"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "Memory"
             },
             "properties": [
@@ -1007,37 +1084,6 @@
               {
                 "id": "decimals",
                 "value": 2
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "gauge",
-                  "mode": "basic"
-                }
-              },
-              {
-                "id": "max",
-                "value": 2
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "green",
-                      "value": null
-                    },
-                    {
-                      "color": "orange",
-                      "value": 1.4
-                    },
-                    {
-                      "color": "red",
-                      "value": 1.8
-                    }
-                  ]
-                }
               }
             ]
           },
@@ -1153,7 +1199,7 @@
     {
       "id": 13,
       "type": "row",
-      "title": "GPU: one NVIDIA T4, shared by up to 4 chats",
+      "title": "GPU: one NVIDIA T4 (15 GB), shared by HAMi",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -1230,8 +1276,8 @@
     {
       "id": 15,
       "type": "gauge",
-      "title": "GPU memory",
-      "description": "Loaded models use GPU memory. Orange at 70, red at 90.",
+      "title": "GPU memory in use",
+      "description": "Memory the loaded models really use, all chats together. Orange at 70, red at 90.",
       "gridPos": {
         "x": 4,
         "y": 25,
@@ -1293,9 +1339,9 @@
     },
     {
       "id": 16,
-      "type": "bargauge",
-      "title": "Who holds a GPU slice",
-      "description": "Each chat holds one slice while it runs. Pods waiting for a slice are not counted.",
+      "type": "barchart",
+      "title": "GPU memory per chat: booked and used",
+      "description": "Booked is the share HAMi keeps for the chat (its size). Used is what its model takes now.",
       "gridPos": {
         "x": 8,
         "y": 25,
@@ -1312,44 +1358,104 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (namespace) (kube_pod_container_resource_limits{resource=\"nvidia_com_gpu\", namespace=~\"ai-.+\"} * on(namespace, pod) group_left() (kube_pod_status_phase{phase=\"Running\"} == 1))",
-          "legendFormat": "{{namespace}}",
+          "expr": "sum by (namespace) (hami_vgpu_memory_allocated_bytes)",
+          "legendFormat": "",
           "refId": "A",
           "instant": true,
-          "range": false
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (namespace) (hami_vgpu_memory_used_bytes)",
+          "legendFormat": "",
+          "refId": "B",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "namespace": "Chat",
+              "Value #A": "Booked",
+              "Value #B": "Used"
+            }
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
           "min": 0,
-          "max": 1,
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Booked"
+            },
+            "properties": [
               {
-                "color": "green",
-                "value": null
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794F2"
+                }
               }
             ]
           },
-          "color": {
-            "mode": "thresholds"
-          },
-          "unit": "none"
-        },
-        "overrides": []
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "orientation": "horizontal",
-        "displayMode": "basic",
-        "showUnfilled": true,
-        "valueMode": "hidden",
-        "namePlacement": "top",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
+        "xField": "Chat",
+        "barWidth": 0.8,
+        "groupWidth": 0.75,
+        "showValue": "never",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
         }
       }
     },
@@ -1830,8 +1936,8 @@
     {
       "id": 24,
       "type": "stat",
-      "title": "GPU slice",
-      "description": "1 means it holds a slice. 0 means it is waiting for one.",
+      "title": "GPU memory booked",
+      "description": "Its share of GPU memory. 0 means it is waiting for GPU memory.",
       "gridPos": {
         "x": 4,
         "y": 43,
@@ -1848,7 +1954,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(kube_pod_container_resource_limits{namespace=\"$chat\", resource=\"nvidia_com_gpu\"} * on(namespace, pod) group_left() (kube_pod_status_phase{phase=\"Running\"} == 1)) or vector(0)",
+          "expr": "sum(hami_vgpu_memory_allocated_bytes{namespace=\"$chat\"}) or vector(0)",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -1857,7 +1963,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
+          "unit": "bytes",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2282,12 +2388,110 @@
     {
       "id": 31,
       "type": "timeseries",
-      "title": "CPU (cores)",
-      "description": "By part: ollama is the model server, webui is the chat page.",
+      "title": "GPU memory",
+      "description": "Booked share and what the model really uses.",
       "gridPos": {
         "x": 8,
         "y": 47,
-        "w": 8,
+        "w": 5,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(hami_vgpu_memory_allocated_bytes{namespace=\"$chat\"})",
+          "legendFormat": "Booked",
+          "refId": "A",
+          "instant": false,
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(hami_vgpu_memory_used_bytes{namespace=\"$chat\"})",
+          "legendFormat": "Used",
+          "refId": "B",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "fillOpacity": 12,
+            "lineWidth": 2,
+            "drawStyle": "line",
+            "showPoints": "never",
+            "axisSoftMin": 0,
+            "spanNulls": true
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Booked"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794F2"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "CPU (cores)",
+      "description": "By part: ollama is the model server, webui is the chat page.",
+      "gridPos": {
+        "x": 13,
+        "y": 47,
+        "w": 5,
         "h": 7
       },
       "datasource": {
@@ -2367,14 +2571,14 @@
       }
     },
     {
-      "id": 32,
+      "id": 33,
       "type": "timeseries",
       "title": "Memory",
       "description": "By part: ollama is the model server, webui is the chat page.",
       "gridPos": {
-        "x": 16,
+        "x": 18,
         "y": 47,
-        "w": 8,
+        "w": 6,
         "h": 7
       },
       "datasource": {
@@ -2454,7 +2658,7 @@
       }
     },
     {
-      "id": 33,
+      "id": 34,
       "type": "logs",
       "title": "Logs of $chat",
       "description": "Newest first. Health checks are hidden.",
