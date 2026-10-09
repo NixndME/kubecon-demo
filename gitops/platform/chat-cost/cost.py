@@ -154,26 +154,34 @@ def step():
             c["seconds"] += STEP
     if until <= since:
         return
+    # Open WebUI logs a question when its answer is done; the model server logs each call when it ends.
+    # A call belongs to the latest question logged no later than 3 s after the call ended (the answer itself,
+    # then the title, tags and follow-up suggestions). Look 10 minutes back and up to now for the neighbours,
+    # but price only the questions in [since, until), so each one is priced once.
     questions = {}
-    for ts, st, line in loki('{namespace=~"ai-.+", container="webui"} |= "audit:write" |= "/api/chat/completions"', since, until):
+    for ts, st, line in loki('{namespace=~"ai-.+", container="webui"} |= "audit:write" |= "/api/chat/completions"', since - 600 * 10**9, now_ns):
         q = question_of(line)
         if q:
             questions.setdefault(st["namespace"], []).append((ts, q))
     calls = {}
-    for ts, st, line in loki('{namespace=~"ai-.+", container="ollama"} |= "[GIN]" |= "POST"', since, until):
+    for ts, st, line in loki('{namespace=~"ai-.+", container="ollama"} |= "[GIN]" |= "POST"', since - 600 * 10**9, now_ns):
         m = GIN.search(line)
         if m and m.group(3) in ("/api/chat", "/api/generate", "/api/embed", "/api/embeddings"):
             calls.setdefault(st["namespace"], []).append((ts, go_seconds(m.group(2)), m.group(3)))
     with lock:
         for ns, qs in questions.items():
-            mine = calls.get(ns, [])
+            owned = {n: [] for n in range(len(qs))}
+            for call in calls.get(ns, []):
+                if call[2].startswith("/api/embed"):
+                    # Reading a document (indexing or search) happens before the answer: it belongs to the next question
+                    n = min((k for k, (ts, _) in enumerate(qs) if ts >= call[0] - 3 * 10**9), default=None)
+                else:
+                    n = max((k for k, (ts, _) in enumerate(qs) if ts <= call[0] + 3 * 10**9), default=None)
+                if n is not None:
+                    owned[n].append(call)
             for n, (ts, q) in enumerate(qs):
-                nxt = qs[n + 1][0] if n + 1 < len(qs) else until
-                # Calls that end after the question arrived and before the next one belong to it (answer, title,
-                # follow-up suggestions, document search)
-                own = [c for c in mine if ts - 5 * 10**9 <= c[0] < nxt]
-                if own:
-                    record(ns, q, own, info.get(ns, {}))
+                if since <= ts < until and owned[n]:
+                    record(ns, q, owned[n], info.get(ns, {}))
         state["since_ns"] = until
         json.dump(state, open(STATE + ".tmp", "w"))
         os.replace(STATE + ".tmp", STATE)
