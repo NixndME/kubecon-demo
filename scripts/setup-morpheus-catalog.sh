@@ -77,7 +77,7 @@ old=$(api GET "/api/catalog-item-types?max=500" | jq -r '.catalogItemTypes[] | s
 echo "==> Lists"
 models=$(upsert /api/library/option-type-lists optionTypeLists name "AI models" optionTypeList "$(jq -n '{optionTypeList:{
   name:"AI models", type:"manual", description:"Small models that fit a GPU slice",
-  initialDataset:([{name:"Llama 3.2 3B (fast, general)",value:"llama3.2:3b"},{name:"Phi-4 mini 3.8B (MIT license)",value:"phi4-mini"}]|tojson)}}')")
+  initialDataset:([{name:"Llama 3.2 3B (fast, general)",value:"llama3.2:3b"},{name:"Phi-4 mini 3.8B (MIT license)",value:"phi4-mini:3.8b"}]|tojson)}}')")
 translate='for (var i = 0; i < data.items.length; i++) { var a = data.items[i]; var l = a.metadata.labels || {}; var o = (a.metadata.annotations || {})["kubecon-demo/owner"] || "?"; var p = {}; var ps = (a.spec.source.helm || {}).parameters || []; for (var j = 0; j < ps.length; j++) { p[ps[j].name] = ps[j].value; } var h = (a.status && a.status.health && a.status.health.status) || "?"; results.push({name: a.metadata.name + " (" + o + ", " + p.model + ", " + (h == "Healthy" ? "running" : h == "Progressing" ? "starting or waiting for a GPU slice" : h) + ")", value: a.metadata.name}); }'
 chats=$(upsert /api/library/option-type-lists optionTypeLists name "AI chats (live)" optionTypeList "$(jq -n \
   --arg url "$ARGOCD/api/v1/applications?selector=kubecon-demo/catalog%3Dai-chat" --arg t "$TOKEN" --arg tr "$translate" '{optionTypeList:{

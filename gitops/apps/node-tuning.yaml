@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: node-tuning
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/NixndME/kubecon-demo.git
+    targetRevision: main
+    path: gitops/platform/node-tuning
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: node-tuning
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

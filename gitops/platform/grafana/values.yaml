@@ -64,3 +64,13 @@ dashboards:
       gnetId: 12239
       revision: 2
       datasource: Prometheus
+
+# Dashboards kept in Git under gitops/platform/grafana-dashboards (ConfigMaps with the grafana_dashboard label)
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    searchNamespace: grafana
+    folderAnnotation: grafana_folder
+    provider:
+      foldersFromFilesStructure: true
