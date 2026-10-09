@@ -8,6 +8,6 @@ kubecon-demo/team: {{ printf "%q" (ternary "" $team (eq $team "null")) }}
 
 {{- define "ai-chat.annotations" -}}
 kubecon-demo/requested-by: {{ .Values.requestedBy | quote }}
-kubecon-demo/owner: {{ printf "%s <%s>" .Values.ownerName .Values.ownerEmail | quote }}
+kubecon-demo/owner: {{ .Values.ownerEmail | lower | quote }}
 kubecon-demo/model: {{ .Values.model | quote }}
 {{- end -}}

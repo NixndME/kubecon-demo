@@ -30,10 +30,35 @@ alloy:
           source_labels = ["__meta_kubernetes_pod_label_kubecon_demo_team"]
           target_label  = "team"
         }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_annotation_kubecon_demo_owner"]
+          target_label  = "owner"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_annotation_kubecon_demo_model"]
+          target_label  = "model"
+        }
       }
 
       loki.source.kubernetes "ai" {
         targets    = discovery.relabel.ai.output
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // Cluster events: chats created, ready, removed (Argo CD) and waiting for a GPU (scheduler).
+      // Kubernetes keeps events for about an hour; Loki keeps them for 7 days.
+      loki.source.kubernetes_events "events" {
+        job_name   = "events"
+        log_format = "logfmt"
+        forward_to = [loki.process.chat_events.receiver]
+      }
+
+      // Keep only events about AI chats: Argo CD apps named ai-* and anything in ai-* namespaces
+      loki.process "chat_events" {
+        stage.match {
+          selector = "{job=\"events\", namespace!~\"ai-.+\"} !~ \"name=ai-\""
+          action   = "drop"
+        }
         forward_to = [loki.write.default.receiver]
       }
 
