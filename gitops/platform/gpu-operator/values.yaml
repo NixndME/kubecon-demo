@@ -1,0 +1,25 @@
+# NVIDIA GPU Operator: lets pods ask for a GPU (nvidia.com/gpu) and exports GPU metrics.
+# The driver is already on the node from the cluster layout, so the operator does not install one.
+driver:
+  enabled: false
+
+toolkit:
+  enabled: true
+
+devicePlugin:
+  enabled: true
+
+dcgmExporter:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+
+# Not needed for a T4: no MIG, no VM passthrough, no confidential computing
+migManager:
+  enabled: false
+vfioManager:
+  enabled: false
+ccManager:
+  enabled: false
+sandboxWorkloads:
+  enabled: false
