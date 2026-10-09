@@ -2,6 +2,13 @@
 deployment:
   replicas: 1
 
+# Ports 80 and 443 are taken on the node, so stop the old pod before the new one starts
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 0
+
 # No cloud load balancer here, Traefik answers on the node itself
 service:
   spec:
