@@ -2,8 +2,10 @@
 deployment:
   replicas: 1
 
+# No cloud load balancer here, Traefik answers on the node itself
 service:
-  type: ClusterIP
+  spec:
+    type: ClusterIP
 
 ingressClass:
   enabled: true
@@ -24,6 +26,12 @@ ports:
 providers:
   kubernetesCRD:
     allowCrossNamespace: true
+  # Ingresses show this address, so Argo CD sees them as healthy
+  kubernetesIngress:
+    publishedService:
+      enabled: false
+    ingressEndpoint:
+      hostname: ingress.kubeforge.live
 
 # Dashboard at https://traefik.<domain>, behind a login
 ingressRoute:
