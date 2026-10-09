@@ -858,12 +858,12 @@
                         "index": 0
                       },
                       "2": {
-                        "text": "Mostly idle: pick a smaller size or a time limit",
+                        "text": "Mostly idle: smaller size or time limit",
                         "color": "orange",
                         "index": 1
                       },
                       "3": {
-                        "text": "Model spills to the CPU: try Medium",
+                        "text": "Spills to CPU: try Medium",
                         "color": "red",
                         "index": 2
                       },
@@ -873,7 +873,7 @@
                         "index": 3
                       },
                       "5": {
-                        "text": "Very busy: pick a bigger size",
+                        "text": "Very busy: bigger size",
                         "color": "red",
                         "index": 4
                       }
