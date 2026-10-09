@@ -19,7 +19,7 @@ No passwords, keys or Terraform state are in this repo. They stay on the machine
 | `terraform/hks` | The HKS nodes: one master and one GPU worker |
 | `scripts` | Install Morpheus, NVIDIA driver and API name steps for the cluster layout, Argo CD bootstrap, Morpheus catalog setup |
 | `gitops` | What Argo CD runs: cert-manager, Traefik, Argo CD, GPU Operator, storage, Loki, Grafana, the AI chat chart |
-| `morpheus` | Files the catalog setup loads into Morpheus: the blueprint spec and the remove task |
+| `morpheus` | Files the catalog setup loads into Morpheus: blueprint specs, the remove task, catalog logos |
 
 ## How it fits together
 
@@ -48,6 +48,14 @@ No passwords, keys or Terraform state are in this repo. They stay on the machine
   its namespace, its GPU slice and the Morpheus app are removed.
 - Grafana, dashboard "AI chats": orders, starts and removals (7 days), running chats with owner, model, size and
   GPU memory booked and used, the GPU, the questions asked (who, model, question) and the logs of one chat.
+
+## Chat with your documents
+
+- A second catalog item, "Chat with your documents". Same form and sizes.
+- It makes `ai-<first name>-docs` at `https://<first name>-docs.<domain>`, so one person can have both.
+- In the chat box, click +, add a PDF, Word or text file, and ask about it. The answer shows which file it used.
+- Files are indexed by a small embedding model (`nomic-embed-text`) on the chat's own Ollama. Nothing leaves the
+  cluster. Grafana counts the files uploaded per chat; file contents are never logged.
 
 ## Sharing the GPU (HAMi)
 
