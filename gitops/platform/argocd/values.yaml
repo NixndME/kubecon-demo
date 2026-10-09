@@ -13,6 +13,8 @@ configs:
     users.anonymous.enabled: false
     # Account for the Morpheus Argo CD plugin, it signs in with an API token only
     accounts.morpheus: apiKey
+    # Shared look-only login, password set by scripts/setup-readonly.sh
+    accounts.readonly: login
   rbac:
     policy.default: role:readonly
     policy.csv: |
@@ -21,6 +23,7 @@ configs:
       p, role:morpheus, projects, get, *, allow
       p, role:morpheus, logs, get, */*, allow
       g, morpheus, role:morpheus
+      g, readonly, role:readonly
 
 dex:
   enabled: false

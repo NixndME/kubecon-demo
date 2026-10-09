@@ -53,7 +53,9 @@ class Collector {
     private List<Map> approvals(Map v) {
         Map r = api.get('/api/approvals?max=50&sort=dateCreated&direction=desc')
         if ((r._status as Integer) != 200) { v.canApprove = false; return [] }
-        v.canApprove = true
+        // buttons only for users who may approve; read access only lists the orders
+        Map me = api.get('/api/whoami')
+        v.canApprove = (me.permissions ?: []).any { it instanceof Map && it.code == 'operations-approvals' && it.access == 'full' }
         List<Map> out = []
         (r.approvals ?: []).findAll { (it.status as String)?.contains('requested') }.take(10).each { Map a ->
             Map d = api.get("/api/approvals/${a.id}").approval as Map ?: [:]
