@@ -107,7 +107,9 @@ def chat_info():
     mem = prom('sum by (namespace) (container_memory_working_set_bytes{namespace=~"ai-.+", container!=""})')
     labels = {}
     for m in loki_metric('count by (namespace, owner, model, size, team) (count_over_time({namespace=~"ai-.+", container=~".+"} [10m]))'):
-        labels[m.get("namespace", "")] = {k: m.get(k, "") for k in ("owner", "model", "size", "team")}
+        # some streams carry no owner labels; keep the one that does
+        if m.get("owner") or m.get("namespace", "") not in labels:
+            labels[m.get("namespace", "")] = {k: m.get(k, "") for k in ("owner", "model", "size", "team")}
     return {ns: {"gpu_gb": gpu.get(ns, 0) / 2**30, "cpu": cpu.get(ns, 0), "mem_gb": mem.get(ns, 0) / 2**30,
                  **labels.get(ns, {"owner": "", "model": "", "size": "", "team": ""})} for ns in up}
 
@@ -153,8 +155,10 @@ def backfill(seconds):
     cpu = prom(f'sum by (namespace) (increase(container_cpu_usage_seconds_total{{{sel}, container!=""}}[{w}]))')
     mem = prom(f'sum_over_time((sum by (namespace) (container_memory_working_set_bytes{{{sel}, container!=""}})){r})')
     up = prom(f"count_over_time((sum by (namespace) (kube_pod_info{{{sel}}})){r})")
-    labels = {m.get("namespace", ""): m for m in loki_metric(
-        f'count by (namespace, owner, model, size, team) (count_over_time({{{sel}, container=~".+"}} [{w}]))')}
+    labels = {}
+    for m in loki_metric(f'count by (namespace, owner, model, size, team) (count_over_time({{{sel}, container=~".+"}} [{w}]))'):
+        if m.get("owner") or m.get("namespace", "") not in labels:
+            labels[m.get("namespace", "")] = m
     with lock:
         for ns in up:
             m = labels.get(ns, {})
@@ -163,6 +167,16 @@ def backfill(seconds):
             c["cpu"] += cpu.get(ns, 0) / 3600 * VCPU_H
             c["mem"] += mem.get(ns, 0) * 30 / 3600 / 2**30 * MEM_GB_H
             c["seconds"] += up.get(ns, 0) * 30
+
+
+def fill_labels():
+    missing = [ns for ns, c in state["chats"].items() if not c["labels"].get("owner")]
+    if not missing:
+        return
+    for m in loki_metric('count by (namespace, owner, model, size, team) (count_over_time({namespace=~"ai-.+", container=~".+"} [6h]))'):
+        ns = m.get("namespace", "")
+        if ns in missing and m.get("owner"):
+            state["chats"][ns]["labels"] = {k: m.get(k, "") for k in ("owner", "model", "size", "team")}
 
 
 def step():
@@ -281,5 +295,9 @@ if __name__ == "__main__":
             backfill(BACKFILL // 10**9)
         except Exception as e:
             print(json.dumps({"type": "error", "message": "backfill: " + str(e)[:300]}), flush=True)
+    try:
+        fill_labels()
+    except Exception as e:
+        print(json.dumps({"type": "error", "message": "labels: " + str(e)[:300]}), flush=True)
     Thread(target=loop, daemon=True).start()
     HTTPServer(("", 9100), Handler).serve_forever()

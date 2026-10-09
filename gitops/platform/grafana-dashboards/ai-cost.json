@@ -968,7 +968,7 @@
         "x": 0,
         "y": 13,
         "w": 12,
-        "h": 8
+        "h": 12
       },
       "datasource": {
         "type": "prometheus",
@@ -1096,7 +1096,7 @@
         "x": 12,
         "y": 13,
         "w": 12,
-        "h": 8
+        "h": 12
       },
       "datasource": {
         "type": "prometheus",
@@ -1250,7 +1250,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 21,
+        "y": 25,
         "w": 24,
         "h": 1
       },
@@ -1263,7 +1263,7 @@
       "description": "Orange from $0.001, red from $0.005.",
       "gridPos": {
         "x": 0,
-        "y": 22,
+        "y": 26,
         "w": 24,
         "h": 9
       },
@@ -1646,7 +1646,7 @@
       "description": "First question after a start includes loading the model.",
       "gridPos": {
         "x": 0,
-        "y": 31,
+        "y": 35,
         "w": 24,
         "h": 10
       },
@@ -2029,7 +2029,7 @@
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 41,
+        "y": 45,
         "w": 24,
         "h": 1
       },
@@ -2042,7 +2042,7 @@
       "description": "AWS on-demand, us-west-2, 2026-10-09.",
       "gridPos": {
         "x": 0,
-        "y": 42,
+        "y": 46,
         "w": 12,
         "h": 11
       },
