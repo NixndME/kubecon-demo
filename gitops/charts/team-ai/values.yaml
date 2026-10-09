@@ -2,7 +2,9 @@
 team: demo
 model: llama3.2:3b
 requestedBy: ""
-# The developer picks this password when ordering; the chat login is <team>@<domain>
+# The person who ordered: their email is the chat login, the password is made by Morpheus at order time
+ownerName: ""
+ownerEmail: ""
 chatPassword: ""
 
 domain: kubeforge.live
