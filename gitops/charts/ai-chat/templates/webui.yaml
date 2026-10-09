@@ -54,6 +54,9 @@ spec:
               value: "true"
             - name: ENABLE_AUDIT_LOGS_FILE
               value: "false"
+            # The web page sends many settings before the messages; keep enough of the request to see the question
+            - name: MAX_BODY_LOG_SIZE
+              value: "65536"
           envFrom:
             - secretRef:
                 name: webui-login
