@@ -35,7 +35,7 @@ GPU_GB_H = GPU_H / gpu_mem_gb
 
 lock = Lock()
 # Bump when the way questions are priced changes: the recorder then starts fresh
-STATE_VERSION = 4
+STATE_VERSION = 5
 state = {"version": STATE_VERSION, "since_ns": 0, "chats": {}}
 
 
@@ -126,7 +126,8 @@ def record(ns, q, calls, info):
     end = max(t for t, _, _ in calls) / 1e9
     cores = prom(f'sum by (namespace) (rate(container_cpu_usage_seconds_total{{namespace="{ns}", container="ollama"}}[1m]))', end + 30).get(ns, 0)
     mem = prom(f'sum by (namespace) (container_memory_working_set_bytes{{namespace="{ns}", container="ollama"}})', end).get(ns, 0) / 2**30
-    gpu_gb = info.get("gpu_gb", 0)
+    # GPU memory booked when the question was asked (the chat may be gone by now)
+    gpu_gb = prom(f'sum by (namespace) (hami_vgpu_memory_allocated_bytes{{namespace="{ns}"}})', end).get(ns, info.get("gpu_gb", 0) * 2**30) / 2**30
     cost = {"gpu": gpu_gb * GPU_GB_H * busy / 3600, "cpu": cores * busy * VCPU_H / 3600, "mem": mem * busy * MEM_GB_H / 3600}
     c = chat(ns, info)
     c["q_gpu"] += cost["gpu"]; c["q_cpu"] += cost["cpu"]; c["q_mem"] += cost["mem"]
@@ -140,6 +141,27 @@ def record(ns, q, calls, info):
 
 DELAY = 60 * 10**9
 BACKFILL = int(os.environ.get("BACKFILL_MINUTES", "120")) * 60 * 10**9
+
+
+def backfill(seconds):
+    """First start: rebuild each chat's running cost for the catch-up window from Prometheus history, so it
+    matches the questions priced for the same window (also for chats removed since)."""
+    w, r = f"{seconds}s", f"[{seconds}s:30s]"
+    sel = 'namespace=~"ai-.+"'
+    gpu = prom(f"sum_over_time((sum by (namespace) (hami_vgpu_memory_allocated_bytes{{{sel}}})){r})")
+    cpu = prom(f'sum by (namespace) (increase(container_cpu_usage_seconds_total{{{sel}, container!=""}}[{w}]))')
+    mem = prom(f'sum_over_time((sum by (namespace) (container_memory_working_set_bytes{{{sel}, container!=""}})){r})')
+    up = prom(f"count_over_time((sum by (namespace) (kube_pod_info{{{sel}}})){r})")
+    labels = {m.get("namespace", ""): m for m in loki_metric(
+        f'count by (namespace, owner, model, size, team) (count_over_time({{{sel}, container=~".+"}} [{w}]))')}
+    with lock:
+        for ns in up:
+            m = labels.get(ns, {})
+            c = chat(ns, {k: m.get(k, "") for k in ("owner", "model", "size", "team")})
+            c["gpu"] += gpu.get(ns, 0) * 30 / 3600 / 2**30 * GPU_GB_H
+            c["cpu"] += cpu.get(ns, 0) / 3600 * VCPU_H
+            c["mem"] += mem.get(ns, 0) * 30 / 3600 / 2**30 * MEM_GB_H
+            c["seconds"] += up.get(ns, 0) * 30
 
 
 def step():
@@ -253,5 +275,10 @@ if __name__ == "__main__":
             state.update(saved)
     print(json.dumps({"type": "start", "gpu_per_hour": round(GPU_H, 4), "gpu_memory_gb_per_hour": round(GPU_GB_H, 5),
                       "vcpu_per_hour": round(VCPU_H, 5), "memory_gb_per_hour": round(MEM_GB_H, 5)}), flush=True)
+    if not state["since_ns"]:
+        try:
+            backfill(BACKFILL // 10**9)
+        except Exception as e:
+            print(json.dumps({"type": "error", "message": "backfill: " + str(e)[:300]}), flush=True)
     Thread(target=loop, daemon=True).start()
     HTTPServer(("", 9100), Handler).serve_forever()
