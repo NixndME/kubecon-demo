@@ -4,8 +4,8 @@ model: llama3.2:3b
 requestedBy: ""
 
 domain: kubeforge.live
-# Login prompt shared with the Traefik dashboard (secret made by scripts/bootstrap-gitops.sh)
-loginMiddleware: traefik-dashboard-login@kubernetescrd
+# Login prompt with the same user as the Traefik dashboard (secret made by scripts/bootstrap-gitops.sh)
+loginMiddleware: traefik-team-login@kubernetescrd
 
 ollama:
   image: ollama/ollama:0.40.0

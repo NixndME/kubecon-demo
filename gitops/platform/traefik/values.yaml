@@ -62,6 +62,18 @@ extraObjects:
       basicAuth:
         secret: dashboard-users
         realm: Traefik
+  # Same login for the team AI chats. The header is removed after the check, because the chat app
+  # would read it as its own login token and sign the user out.
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: team-login
+      namespace: traefik
+    spec:
+      basicAuth:
+        secret: dashboard-users
+        realm: HKS Private AI
+        removeHeader: true
   - apiVersion: cert-manager.io/v1
     kind: Certificate
     metadata:
