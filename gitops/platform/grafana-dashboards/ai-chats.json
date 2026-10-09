@@ -838,6 +838,16 @@
         },
         {
           "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (namespace) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=\"webui\"} |= \"POST /api/v1/files/\" |~ \"HTTP/1.1\\\" 200\" [$__range])) and on (namespace) sum by (namespace) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=~\".+\"} [2m]))",
+          "refId": "I",
+          "queryType": "instant",
+          "legendFormat": ""
+        },
+        {
+          "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
@@ -900,7 +910,8 @@
               "Value #C": 9,
               "Value #D": 10,
               "Value #F": 11,
-              "name": 12
+              "Value #I": 12,
+              "name": 13
             },
             "renameByName": {
               "namespace": "Chat",
@@ -912,9 +923,10 @@
               "Value #B": "Pods ready",
               "Value #G": "GPU booked",
               "Value #H": "GPU used",
-              "Value #C": "CPU (cores)",
+              "Value #C": "CPU",
               "Value #D": "Memory",
               "Value #F": "Questions",
+              "Value #I": "Files",
               "name": "Page"
             }
           }
@@ -932,9 +944,10 @@
                 "Pods ready",
                 "GPU booked",
                 "GPU used",
-                "CPU (cores)",
+                "CPU",
                 "Memory",
                 "Questions",
+                "Files",
                 "Page"
               ]
             }
@@ -1007,6 +1020,18 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "Files"
+            },
+            "properties": [
+              {
+                "id": "noValue",
+                "value": "0"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "Age"
             },
             "properties": [
@@ -1049,18 +1074,6 @@
               {
                 "id": "decimals",
                 "value": 1
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Size"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 80
               }
             ]
           },
@@ -1110,7 +1123,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "CPU (cores)"
+              "options": "CPU"
             },
             "properties": [
               {
@@ -1208,7 +1221,139 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 130
+                "value": 135
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Owner"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 165
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Model"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 115
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Age"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pods ready"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU booked"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU used"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Questions"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Files"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 60
               }
             ]
           }
