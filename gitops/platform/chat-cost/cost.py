@@ -35,7 +35,7 @@ GPU_GB_H = GPU_H / gpu_mem_gb
 
 lock = Lock()
 # Bump when the way questions are priced changes: the recorder then starts fresh
-STATE_VERSION = 3
+STATE_VERSION = 4
 state = {"version": STATE_VERSION, "since_ns": 0, "chats": {}}
 
 
@@ -89,7 +89,9 @@ def question_of(audit_line):
         model = json.loads(body).get("model", "")
     except ValueError:
         model = ""
-    return {"who": a["user"].get("email", ""), "question": text[:300], "model": model}
+    # The web page streams the answer (logged when it starts); scripts and API calls do not (logged when it ends)
+    stream = bool(re.search(r'"stream":\s*true', body))
+    return {"who": a["user"].get("email", ""), "question": text[:300], "model": model, "stream": stream}
 
 
 def loki_metric(query):
@@ -156,10 +158,12 @@ def step():
             c["seconds"] += STEP
     if until <= since:
         return
-    # Open WebUI logs a question when it arrives; the model server logs each call when it ends, with its duration.
-    # A call belongs to the latest question that arrived before the call started (the answer itself, then the
-    # title, tags and follow-up suggestions). Look 10 minutes back and up to now for the neighbours, but price
-    # only the questions in [since, until), so each one is priced once.
+    # Which model calls belong to which question. Open WebUI logs a question when the answer starts streaming
+    # (web page) or when the answer is done (API, no streaming); the model server logs each call when it ends.
+    #  - no streaming: the calls that ended since the previous question (reading a document, then the answer)
+    #  - streaming: the calls that start after it (document search, answer, title, follow-ups), plus the indexing
+    #    of a file uploaded since the previous question
+    # Look 10 minutes back and up to now for the neighbours, but price only the questions in [since, until).
     questions = {}
     for ts, st, line in loki('{namespace=~"ai-.+", container="webui"} |= "audit:write" |= "/api/chat/completions"', since - 600 * 10**9, now_ns):
         q = question_of(line)
@@ -170,21 +174,28 @@ def step():
         m = GIN.search(line)
         if m and m.group(3) in ("/api/chat", "/api/generate", "/api/embed", "/api/embeddings"):
             calls.setdefault(st["namespace"], []).append((ts, go_seconds(m.group(2)), m.group(3)))
+    half = 5 * 10**8
     with lock:
         for ns, qs in questions.items():
-            owned = {n: [] for n in range(len(qs))}
-            for call in calls.get(ns, []):
-                start = call[0] - int(call[1] * 1e9)
-                if call[2].startswith("/api/embed") and not any(ts <= start + 5 * 10**9 <= ts + 30 * 10**9 for ts, _ in qs):
-                    # Indexing an uploaded file happens before anyone asks: it belongs to the next question
-                    n = min((k for k, (ts, _) in enumerate(qs) if ts >= start), default=None)
-                else:
-                    n = max((k for k, (ts, _) in enumerate(qs) if ts <= start + 5 * 10**9), default=None)
-                if n is not None:
-                    owned[n].append(call)
+            mine = [(end, end - int(d * 1e9), d, path) for end, d, path in calls.get(ns, [])]
+            taken, owned = set(), {n: [] for n in range(len(qs))}
+            for n, (ts, q) in enumerate(qs):
+                if not q["stream"]:
+                    prev = qs[n - 1][0] if n else since - 600 * 10**9
+                    for k, c in enumerate(mine):
+                        if k not in taken and prev + half < c[0] <= ts + half:
+                            taken.add(k); owned[n].append(c)
+            for n, (ts, q) in enumerate(qs):
+                if q["stream"]:
+                    prev = qs[n - 1][0] if n else since - 600 * 10**9
+                    nxt = qs[n + 1][0] - half if n + 1 < len(qs) else now_ns
+                    for k, c in enumerate(mine):
+                        indexing = c[3].startswith("/api/embed") and prev < c[0] <= ts
+                        if k not in taken and (ts - half <= c[1] < nxt or indexing):
+                            taken.add(k); owned[n].append(c)
             for n, (ts, q) in enumerate(qs):
                 if since <= ts < until and owned[n]:
-                    record(ns, q, owned[n], info.get(ns, {}))
+                    record(ns, q, [(c[0], c[2], c[3]) for c in owned[n]], info.get(ns, {}))
         state["since_ns"] = until
         json.dump(state, open(STATE + ".tmp", "w"))
         os.replace(STATE + ".tmp", STATE)
