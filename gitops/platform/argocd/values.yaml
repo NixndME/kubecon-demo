@@ -1,0 +1,34 @@
+# Argo CD at https://argocd.<domain>. HTTPS ends at Traefik.
+global:
+  domain: argocd.kubeforge.live
+
+configs:
+  params:
+    server.insecure: true
+  # The admin password lives in the secret "argocd-secret", made by scripts/bootstrap-gitops.sh, never in Git
+  secret:
+    createSecret: false
+  cm:
+    admin.enabled: true
+    users.anonymous.enabled: false
+    # Account for the Morpheus Argo CD plugin, it signs in with an API token only
+    accounts.morpheus: apiKey
+  rbac:
+    policy.default: role:readonly
+    policy.csv: |
+      p, role:morpheus, applications, *, */*, allow
+      p, role:morpheus, clusters, get, *, allow
+      p, role:morpheus, projects, get, *, allow
+      p, role:morpheus, logs, get, */*, allow
+      g, morpheus, role:morpheus
+
+dex:
+  enabled: false
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt
+    tls: true

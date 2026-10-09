@@ -1,0 +1,3 @@
+# cert-manager: free Let's Encrypt certificates for every app
+crds:
+  enabled: true

@@ -1,0 +1,61 @@
+# Traefik: the way in for every app. Runs on the worker node and takes ports 80 and 443 there.
+deployment:
+  replicas: 1
+
+service:
+  type: ClusterIP
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+
+ports:
+  web:
+    hostPort: 80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    hostPort: 443
+
+providers:
+  kubernetesCRD:
+    allowCrossNamespace: true
+
+# Dashboard at https://traefik.<domain>, behind a login
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`traefik.kubeforge.live`)
+    entryPoints: ["websecure"]
+    middlewares:
+      - name: dashboard-login
+    tls:
+      secretName: traefik-dashboard-tls
+
+extraObjects:
+  # Login for the dashboard. The secret "dashboard-users" is made by scripts/bootstrap-gitops.sh, never stored in Git.
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: dashboard-login
+      namespace: traefik
+    spec:
+      basicAuth:
+        secret: dashboard-users
+        realm: Traefik
+  - apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: traefik-dashboard
+      namespace: traefik
+    spec:
+      secretName: traefik-dashboard-tls
+      dnsNames:
+        - traefik.kubeforge.live
+      issuerRef:
+        name: letsencrypt
+        kind: ClusterIssuer

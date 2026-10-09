@@ -1,0 +1,12 @@
+# Never leaves this laptop
+secrets/
+*.pem
+*.key
+.env
+*.env
+
+# Terraform state and vars hold secrets
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
