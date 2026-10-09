@@ -1,0 +1,42 @@
+# Morpheus blueprint spec for one private AI chat.
+# Morpheus fills in the values from the catalog order. It makes an Argo CD app,
+# and Argo CD deploys the chat from gitops/charts/ai-chat into its own namespace.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ai-<%=app.input.customOptions.aiName%>
+  namespace: argocd
+  labels:
+    kubecon-demo/catalog: ai-chat
+    kubecon-demo/chat: '<%=app.input.customOptions.aiName%>'
+    kubecon-demo/team: '<%=app.input.customOptions.aiTeam%>'
+  annotations:
+    kubecon-demo/owner: '<%=app.input.customOptions.aiEmail%>'
+  # Removing this app also removes everything Argo CD deployed for it
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: __REPO_URL__
+    targetRevision: main
+    path: gitops/charts/ai-chat
+    helm:
+      parameters:
+        - name: name
+          value: '<%=app.input.customOptions.aiName%>'
+        - name: team
+          value: '<%=app.input.customOptions.aiTeam%>'
+        - name: model
+          value: '<%=app.input.customOptions.aiModel%>'
+        - name: ownerEmail
+          value: '<%=app.input.customOptions.aiEmail%>'
+        - name: chatPassword
+          value: '<%=app.input.customOptions.aiPassword%>'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ai-<%=app.input.customOptions.aiName%>
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

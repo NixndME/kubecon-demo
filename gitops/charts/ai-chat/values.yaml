@@ -1,9 +1,11 @@
 # Set by the Morpheus catalog order
-team: demo
+# Chat name: the person's first name, used for the web address and the namespace
+name: demo
+team: ""
 model: llama3.2:3b
 requestedBy: ""
-# The person who ordered: their email is the chat login, the password is made by Morpheus at order time
 ownerName: ""
+# Login for the chat page
 ownerEmail: ""
 chatPassword: ""
 
@@ -11,7 +13,7 @@ domain: kubeforge.live
 
 ollama:
   image: ollama/ollama:0.40.0
-  # All teams share one model folder on the GPU node, so a model is downloaded only once
+  # All chats share one model folder on the GPU node, so a model is downloaded only once
   modelCache: /mnt/hks-data/ollama-models
 
 webui:

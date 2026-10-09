@@ -1,0 +1,30 @@
+# Stops one person's catalog order from taking over another person's chat with the same name
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: ai-chat-owner
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["argoproj.io"]
+        apiVersions: ["*"]
+        operations: ["UPDATE"]
+        resources: ["applications"]
+  matchConditions:
+    - name: catalog-chat
+      expression: >-
+        oldObject.metadata.?labels[?'kubecon-demo/catalog'].orValue('') == 'ai-chat'
+  validations:
+    - expression: >-
+        oldObject.metadata.?annotations[?'kubecon-demo/owner'].orValue('') ==
+        object.metadata.?annotations[?'kubecon-demo/owner'].orValue('')
+      message: This chat name is taken by someone else. Order again with another first name.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: ai-chat-owner
+spec:
+  policyName: ai-chat-owner
+  validationActions: ["Deny"]

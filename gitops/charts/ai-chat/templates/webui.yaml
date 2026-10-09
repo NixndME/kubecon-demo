@@ -1,9 +1,9 @@
-# Open WebUI: the team's chat page at https://<team>.<domain>, with its own login
+# Open WebUI: the chat page at https://<name>.<domain>, with its own login
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: webui
-  labels: {{- include "team-ai.labels" . | nindent 4 }}
+  labels: {{- include "ai-chat.labels" . | nindent 4 }}
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
@@ -14,7 +14,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webui
-  labels: {{- include "team-ai.labels" . | nindent 4 }}
+  labels: {{- include "ai-chat.labels" . | nindent 4 }}
 spec:
   replicas: 1
   strategy:
@@ -26,8 +26,8 @@ spec:
     metadata:
       labels:
         app: webui
-        {{- include "team-ai.labels" . | nindent 8 }}
-      annotations: {{- include "team-ai.annotations" . | nindent 8 }}
+        {{- include "ai-chat.labels" . | nindent 8 }}
+      annotations: {{- include "ai-chat.annotations" . | nindent 8 }}
     spec:
       containers:
         - name: webui
@@ -36,7 +36,7 @@ spec:
             - name: OLLAMA_BASE_URL
               value: http://ollama:11434
             - name: WEBUI_NAME
-              value: {{ printf "%s AI" (.Values.team | title) | quote }}
+              value: {{ printf "%s AI" (.Values.name | title) | quote }}
             - name: ENABLE_SIGNUP
               value: "false"
             - name: ENABLE_OPENAI_API
@@ -68,7 +68,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: webui
-  labels: {{- include "team-ai.labels" . | nindent 4 }}
+  labels: {{- include "ai-chat.labels" . | nindent 4 }}
 spec:
   selector:
     app: webui
@@ -80,16 +80,16 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: webui
-  labels: {{- include "team-ai.labels" . | nindent 4 }}
+  labels: {{- include "ai-chat.labels" . | nindent 4 }}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
 spec:
   ingressClassName: traefik
   tls:
-    - hosts: [{{ printf "%s.%s" .Values.team .Values.domain | quote }}]
+    - hosts: [{{ printf "%s.%s" .Values.name .Values.domain | quote }}]
       secretName: webui-tls
   rules:
-    - host: {{ printf "%s.%s" .Values.team .Values.domain | quote }}
+    - host: {{ printf "%s.%s" .Values.name .Values.domain | quote }}
       http:
         paths:
           - path: /

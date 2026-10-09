@@ -1,0 +1,5 @@
+apiVersion: v2
+name: ai-chat
+description: A private AI chat for one person, on one GPU slice
+version: 0.1.0
+appVersion: "1"

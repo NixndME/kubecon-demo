@@ -1,9 +1,0 @@
-# The team's own namespace, so removing the order removes everything
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ .Release.Namespace }}
-  labels: {{- include "team-ai.labels" . | nindent 4 }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "-1"
-    {{- include "team-ai.annotations" . | nindent 4 }}
