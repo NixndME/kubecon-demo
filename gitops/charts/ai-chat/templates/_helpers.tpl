@@ -1,7 +1,9 @@
 {{- define "ai-chat.labels" -}}
 app.kubernetes.io/part-of: ai-chat
 kubecon-demo/chat: {{ .Values.name | quote }}
-kubecon-demo/team: {{ .Values.team | quote }}
+{{- /* Team is optional; an empty order field can arrive as null */}}
+{{- $team := toString (.Values.team | default "") }}
+kubecon-demo/team: {{ printf "%q" (ternary "" $team (eq $team "null")) }}
 {{- end -}}
 
 {{- define "ai-chat.annotations" -}}

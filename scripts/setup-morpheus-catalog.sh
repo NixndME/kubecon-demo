@@ -7,7 +7,7 @@
 # Usage: scripts/setup-morpheus-catalog.sh <morpheus env file> <login file>
 #   morpheus env file: MORPHEUS_URL, MORPHEUS_TOKEN (admin API token)
 #   login file: APPS_USER, APPS_PASSWORD (Argo CD admin; also the developer user's password)
-# Optional: DOMAIN (default kubeforge.live), REPO_URL, DEV_USER (default dev1), CLUSTER (default kubecon-hks), GROUP_ID (default 1)
+# Optional: DOMAIN (default kubeforge.live), REPO_URL, DEV_USER (default dev1), CLUSTER (default kubecon-hks)
 set -euo pipefail
 
 set -a; . "${1:?morpheus env file}"; . "${2:?login file}"; set +a
@@ -16,7 +16,6 @@ ARGOCD="https://argocd.$DOMAIN"
 REPO_URL="${REPO_URL:-https://github.com/NixndME/kubecon-demo.git}"
 DEV_USER="${DEV_USER:-dev1}"
 CLUSTER="${CLUSTER:-kubecon-hks}"
-GROUP_ID="${GROUP_ID:-1}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 M="${MORPHEUS_URL%/}"
 
@@ -56,6 +55,12 @@ cluster=$(api GET "/api/clusters?max=100" | jq -r --arg n "$CLUSTER" '.clusters[
 # The Argo CD namespace: the blueprint's Argo CD app lives there
 pool=$(api GET "/api/clusters/$cluster/namespaces?max=500" | jq -r '.namespaces[] | select(.name=="argocd") | .id' | head -1)
 [ -n "$pool" ] || { echo "No argocd namespace in $CLUSTER" >&2; exit 1; }
+zone=$(api GET "/api/clusters/$cluster" | jq -r .cluster.zone.id)
+
+echo "==> Group \"AI chats\" (chat apps live here; orders in it need approval)"
+group=$(find_id /api/groups groups name "AI chats")
+[ -n "$group" ] || group=$(api POST /api/groups '{"group":{"name":"AI chats","code":"ai-chats","location":"HKS"}}' | jq -r .group.id)
+api PUT "/api/groups/$group/update-zones" "{\"group\":{\"zones\":[{\"id\":$zone}]}}" >/dev/null
 
 echo "==> Remove items from older versions of this script"
 for n in "Order private AI chat:task-sets:taskSets" "Remove private AI chat:task-sets:taskSets" \
@@ -73,7 +78,7 @@ echo "==> Lists"
 models=$(upsert /api/library/option-type-lists optionTypeLists name "AI models" optionTypeList "$(jq -n '{optionTypeList:{
   name:"AI models", type:"manual", description:"Small models that fit a GPU slice",
   initialDataset:([{name:"Llama 3.2 3B (fast, general)",value:"llama3.2:3b"},{name:"Phi-4 mini 3.8B (MIT license)",value:"phi4-mini"}]|tojson)}}')")
-translate='for (var i = 0; i < data.items.length; i++) { var a = data.items[i]; var l = a.metadata.labels || {}; var o = (a.metadata.annotations || {})["kubecon-demo/owner"] || "?"; var p = {}; var ps = (a.spec.source.helm || {}).parameters || []; for (var j = 0; j < ps.length; j++) { p[ps[j].name] = ps[j].value; } var h = (a.status && a.status.health && a.status.health.status) || "?"; results.push({name: l["kubecon-demo/chat"] + " (" + o + ", " + p.model + ", " + (h == "Healthy" ? "running" : h == "Progressing" ? "starting or waiting for a GPU slice" : h) + ")", value: l["kubecon-demo/chat"]}); }'
+translate='for (var i = 0; i < data.items.length; i++) { var a = data.items[i]; var l = a.metadata.labels || {}; var o = (a.metadata.annotations || {})["kubecon-demo/owner"] || "?"; var p = {}; var ps = (a.spec.source.helm || {}).parameters || []; for (var j = 0; j < ps.length; j++) { p[ps[j].name] = ps[j].value; } var h = (a.status && a.status.health && a.status.health.status) || "?"; results.push({name: a.metadata.name + " (" + o + ", " + p.model + ", " + (h == "Healthy" ? "running" : h == "Progressing" ? "starting or waiting for a GPU slice" : h) + ")", value: a.metadata.name}); }'
 chats=$(upsert /api/library/option-type-lists optionTypeLists name "AI chats (live)" optionTypeList "$(jq -n \
   --arg url "$ARGOCD/api/v1/applications?selector=kubecon-demo/catalog%3Dai-chat" --arg t "$TOKEN" --arg tr "$translate" '{optionTypeList:{
   name:"AI chats (live)", type:"rest", description:"AI chats running in the cluster now, read from Argo CD",
@@ -83,28 +88,28 @@ chats=$(upsert /api/library/option-type-lists optionTypeLists name "AI chats (li
 echo "==> Inputs"
 reserved="argocd|grafana|chat|traefik|morpheus|k8s|ingress|www|admin|api|loki|prometheus"
 in_name=$(upsert /api/library/option-types optionTypes name "AI first name" optionType "$(jq -n --arg d "$DOMAIN" --arg r "$reserved" '{optionType:{
-  name:"AI first name", fieldName:"aiName", fieldLabel:"Your first name", type:"text", required:true, displayOrder:1,
+  name:"AI first name", fieldName:"aiName", fieldLabel:"First name", type:"text", required:true, displayOrder:1,
   verifyPattern:("^(?!(" + $r + ")$)[a-z][a-z0-9]{1,14}$"), placeHolder:"jane",
-  helpBlock:("Lowercase, 2 to 15 letters or numbers. Your chat will be at https://<first name>." + $d)}}')")
+  helpBlock:("Lowercase, 2 to 15 letters or numbers. Your chat is named ai-<first name> and opens at https://<first name>." + $d)}}')")
 in_email=$(upsert /api/library/option-types optionTypes name "AI owner email" optionType "$(jq -n '{optionType:{
-  name:"AI owner email", fieldName:"aiEmail", fieldLabel:"Your email", type:"text", required:true, displayOrder:2,
+  name:"AI owner email", fieldName:"aiEmail", fieldLabel:"Email", type:"text", required:true, displayOrder:2,
   verifyPattern:"^[a-z0-9._+-]+@[a-z0-9.-]+[.][a-z]{2,}$", placeHolder:"jane@example.com",
-  helpBlock:"Lowercase. You log in to your chat with this email"}}')")
+  helpBlock:"Lowercase. This is your chat login"}}')")
 in_team=$(upsert /api/library/option-types optionTypes name "AI team" optionType "$(jq -n '{optionType:{
-  name:"AI team", fieldName:"aiTeam", fieldLabel:"Your team", type:"text", required:true, displayOrder:3,
-  verifyPattern:"^[a-z][a-z0-9-]{1,29}$", placeHolder:"platform", helpBlock:"Lowercase. Used to group chats in the dashboards"}}')")
+  name:"AI team", fieldName:"aiTeam", fieldLabel:"Team", type:"text", required:false, displayOrder:4,
+  verifyPattern:"^([a-z][a-z0-9-]{1,29})?$", placeHolder:"platform", helpBlock:"Optional. Lowercase. Only a label for reports"}}')")
 in_model=$(upsert /api/library/option-types optionTypes name "AI model" optionType "$(jq -n --argjson l "$models" '{optionType:{
-  name:"AI model", fieldName:"aiModel", fieldLabel:"Model", type:"select", required:true, displayOrder:4,
+  name:"AI model", fieldName:"aiModel", fieldLabel:"Model", type:"select", required:true, displayOrder:5,
   optionList:{id:$l}, defaultValue:"llama3.2:3b", helpBlock:"Runs on one GPU slice"}}')")
 in_pass=$(upsert /api/library/option-types optionTypes name "AI chat login password" optionType "$(jq -n '{optionType:{
-  name:"AI chat login password", fieldName:"aiPassword", fieldLabel:"Chat password", type:"password", required:true, displayOrder:5,
+  name:"AI chat login password", fieldName:"aiPassword", fieldLabel:"Password", type:"password", required:true, displayOrder:3,
   verifyPattern:"^[A-Za-z0-9!@#$%^&*()_+=.:;?-]{8,64}$",
-  helpBlock:"8 to 64 characters, no spaces, quotes or commas. You log in to your chat with your email and this password"}}')")
+  helpBlock:"Your chat password. 8 to 64 characters, no spaces, quotes or commas"}}')")
 in_chat=$(upsert /api/library/option-types optionTypes name "AI chat to remove" optionType "$(jq -n --argjson l "$chats" '{optionType:{
   name:"AI chat to remove", fieldName:"aiChat", fieldLabel:"Chat", type:"select", required:true, displayOrder:1,
-  optionList:{id:$l}, helpBlock:"Chats running in the HKS cluster now"}}')")
+  optionList:{id:$l}, helpBlock:"AI chats in the HKS cluster now, by app name"}}')")
 in_confirm=$(upsert /api/library/option-types optionTypes name "AI chat remove confirm" optionType "$(jq -n '{optionType:{
-  name:"AI chat remove confirm", fieldName:"aiConfirm", fieldLabel:"Type the chat name to confirm", type:"text", required:true,
+  name:"AI chat remove confirm", fieldName:"aiConfirm", fieldLabel:"Type the app name to confirm", type:"text", required:true, placeHolder:"ai-jane",
   displayOrder:2, helpBlock:"The chat, its model server and its GPU slice are removed. This cannot be undone."}}')")
 
 echo "==> Blueprint"
@@ -119,18 +124,20 @@ blueprint=$(upsert /api/blueprints blueprints name "Private AI chat" blueprint "
 
 echo "==> Remove task and workflow"
 groovy=$(sed -e "s|__ARGOCD_URL__|$ARGOCD|g" -e "s|__ARGOCD_TOKEN__|$TOKEN|g" -e "s|__MORPHEUS_URL__|$M|g" -e "s|__MORPHEUS_TOKEN__|$MORPHEUS_TOKEN|g" "$HERE/../morpheus/remove-ai-chat.groovy")
-t_remove=$(upsert /api/tasks tasks name "Remove private AI chat" task "$(jq -n --arg g "$groovy" '{task:{
-  name:"Remove private AI chat", taskType:{code:"groovyTask"}, executeTarget:"local", file:{sourceType:"local", content:$g}}}')")
+t_remove=$(upsert /api/tasks tasks name "Remove AI chat (check and delete)" task "$(jq -n --arg g "$groovy" '{task:{
+  name:"Remove AI chat (check and delete)", taskType:{code:"groovyTask"}, executeTarget:"local", file:{sourceType:"local", content:$g}}}')")
 w_remove=$(upsert /api/task-sets taskSets name "Remove AI chat" taskSet "$(jq -n --argjson a "$t_remove" --argjson i "$in_chat" --argjson k "$in_confirm" '{taskSet:{
   name:"Remove AI chat", type:"operation", description:"Removes an AI chat and frees its GPU slice",
   tasks:[{taskId:$a, taskPhase:"operation"}], optionTypes:[$i,$k]}}')")
+# The HTTP remove task of an older version, no longer used by the workflow
+old=$(find_id /api/tasks tasks name "Remove private AI chat"); [ -z "$old" ] || api DELETE "/api/tasks/$old" >/dev/null || echo "    could not remove the old remove task"
 
 echo "==> Catalog items"
 # Morpheus keeps the order values in app.input, which the blueprint spec reads; it needs both blocks below
 appspec="name: ai-<%=customOptions.aiName%>
 description: 'Chat page https://<%=customOptions.aiName%>.$DOMAIN, login <%=customOptions.aiEmail%>, team <%=customOptions.aiTeam%>, model <%=customOptions.aiModel%>'
 group:
-  id: $GROUP_ID
+  id: $group
 defaultPool:
   id: $pool
 customOptions:
@@ -149,21 +156,22 @@ config:
 "
 c_order=$(upsert /api/catalog-item-types catalogItemTypes name "Private AI chat" catalogItemType "$(jq -n --argjson b "$blueprint" --arg s "$appspec" \
   --argjson i0 "$in_name" --argjson i1 "$in_email" --argjson i2 "$in_team" --argjson i3 "$in_model" --argjson i4 "$in_pass" --arg d "$DOMAIN" '{catalogItemType:{
-  name:"Private AI chat", type:"blueprint", blueprint:{id:$b}, appSpec:$s, optionTypes:[$i0,$i1,$i2,$i3,$i4],
+  name:"Private AI chat", type:"blueprint", blueprint:{id:$b}, appSpec:$s, optionTypes:[$i0,$i1,$i4,$i2,$i3],
   enabled:true, featured:true, visibility:"public",
   description:"Your own AI chat on the HKS GPU, at https://<first name>." + $d,
-  content:("## Private AI chat\n\nYour own chat page at **https://<first name>." + $d + "**, running a small AI model on one slice of the HKS GPU.\n\n- Log in with **your email** and the **password** you choose here.\n- After approval it shows in **Provisioning > Apps** (or your Inventory) as **ai-<first name>**, with the link.\n- The page is ready about 2 minutes later. If all GPU slices are in use, it starts when one is free.\n- Your data stays in the cluster.")}}')")
+  content:("## Private AI chat\n\nYour own chat page at **https://<first name>." + $d + "**, running a small AI model on one slice of the HKS GPU.\n\n- Log in with **your email** and the **password** you choose here.\n- After approval it shows in **Apps** as **ai-<first name>**, with the link. The same name is used in Argo CD, Grafana and the cluster (namespace ai-<first name>).\n- The page is ready about 2 minutes later. If all GPU slices are in use, it starts when one is free.\n- Your data stays in the cluster.")}}')")
 c_remove=$(upsert /api/catalog-item-types catalogItemTypes name "Remove AI chat" catalogItemType "$(jq -n --argjson w "$w_remove" --argjson i "$in_chat" --argjson k "$in_confirm" '{catalogItemType:{
   name:"Remove AI chat", type:"workflow", workflow:{id:$w}, context:"appliance", optionTypes:[$i,$k],
   enabled:true, featured:false, visibility:"public",
-  description:"Removes an AI chat and frees its GPU slice.", content:"Pick a running chat, then type its name to confirm. Its page, model server, GPU slice and Morpheus app are removed."}}')")
+  description:"Removes an AI chat and frees its GPU slice.", content:"Pick a chat, then type its app name (for example ai-jane) to confirm. Its page, model server, GPU slice, namespace and Morpheus app are removed."}}')")
 
 echo "==> Role, developer user, approval"
 role=$(upsert /api/roles roles authority "AI Developer" role "$(jq -n '{role:{authority:"AI Developer",
   description:"Orders private AI chats from the Service Catalog", roleType:"user"}}')")
 api PUT "/api/roles/$role/update-persona" '{"personaCode":"serviceCatalog","access":"full"}' >/dev/null
 api PUT "/api/roles/$role/update-persona" '{"personaCode":"standard","access":"none"}' >/dev/null
-api PUT "/api/roles/$role/update-group" "{\"groupId\":$GROUP_ID,\"access\":\"full\"}" >/dev/null || true
+api PUT "/api/roles/$role/update-group" "{\"groupId\":$group,\"access\":\"full\"}" >/dev/null || true
+api PUT "/api/roles/$role/update-group" '{"groupId":1,"access":"none"}' >/dev/null || true
 api PUT "/api/roles/$role/update-blueprint" "{\"blueprintId\":$blueprint,\"access\":\"full\"}" >/dev/null || echo "    could not give blueprint access"
 for c in "$c_order" "$c_remove"; do api PUT "/api/roles/$role/update-catalog-item-type" "{\"catalogItemTypeId\":$c,\"access\":\"full\"}" >/dev/null; done
 for p in service-catalog:full service-catalog-dashboard:read service-catalog-inventory:full provisioning-execute-workflow:full executions:read apps:full services-cypher:none; do
@@ -174,15 +182,17 @@ if [ -z "$user" ]; then
   user=$(api POST /api/users "$(jq -n --arg u "$DEV_USER" --arg d "$DOMAIN" --arg p "$APPS_PASSWORD" --argjson r "$role" '{user:{
     username:$u, email:($u + "@" + $d), firstName:"Dev", lastName:"One", password:$p, roles:[{id:$r}], receiveNotifications:false}}')" | jq -r .user.id)
 fi
-# An admin approves the developer's chat orders (blueprint) and removals (workflow)
-for t in "provisionApproval:Approve AI chat orders" "workflowApproval:Approve AI chat removals"; do
-  code=${t%%:*}; name=${t#*:}
-  old=$(api GET "/api/policies?max=500" | jq -r --arg n "$name" --arg c "$code" '.policies[] | select(.name==$n and .policyType.code!=$c) | .id')
-  [ -z "$old" ] || api DELETE "/api/policies/$old" >/dev/null
+# An admin approves chat orders (blueprint apps only follow group or cloud policies) and the developer's removals
+for t in "provisionApproval:Approve AI chat orders:ComputeSite:$group" "workflowApproval:Approve AI chat removals:User:$user"; do
+  IFS=: read -r code name rtype rid <<<"$t"
+  old=$(api GET "/api/policies?max=500" | jq -r --arg n "$name" --arg c "$code" --arg r "$rtype" \
+    '.policies[] | select(.name==$n and (.policyType.code!=$c or .refType!=$r)) | .id')
+  for o in $old; do api DELETE "/api/policies/$o" >/dev/null; done
   pol=$(api GET "/api/policies?max=500" | jq -r --arg n "$name" '.policies[] | select(.name==$n) | .id' | head -1)
-  [ -n "$pol" ] || api POST /api/policies "$(jq -n --argjson u "$user" --arg c "$code" --arg n "$name" '{policy:{name:$n,
-    description:"An admin approves this for the developer user", policyType:{code:$c},
-    enabled:true, refType:"User", refId:$u, user:{id:$u}, config:{accountIntegrationId:-100}}}')" >/dev/null
+  [ -n "$pol" ] || api POST /api/policies "$(jq -n --arg c "$code" --arg n "$name" --arg r "$rtype" --argjson i "$rid" '{policy:({name:$n,
+    description:"An admin approves this for AI developers", policyType:{code:$c},
+    enabled:true, refType:$r, refId:$i, config:{accountIntegrationId:-100}}
+    + (if $r == "User" then {user:{id:$i}} else {site:{id:$i}} end))}')" >/dev/null
 done
 
 echo "==> Remove older Argo CD tokens of the morpheus account"
