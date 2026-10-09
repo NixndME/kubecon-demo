@@ -44,27 +44,6 @@ datasources:
         url: http://loki.loki.svc:3100
         access: proxy
 
-dashboardProviders:
-  dashboardproviders.yaml:
-    apiVersion: 1
-    providers:
-      - name: gpu
-        orgId: 1
-        folder: GPU
-        type: file
-        disableDeletion: true
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards/gpu
-
-# NVIDIA's own GPU dashboard from grafana.com
-dashboards:
-  gpu:
-    nvidia-dcgm:
-      gnetId: 12239
-      revision: 2
-      datasource: Prometheus
-
 # Dashboards kept in Git under gitops/platform/grafana-dashboards (ConfigMaps with the grafana_dashboard label)
 sidecar:
   dashboards:
