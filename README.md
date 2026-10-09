@@ -20,6 +20,7 @@ No passwords, keys or Terraform state are in this repo. They stay on the machine
 | `scripts` | Install Morpheus, NVIDIA driver and API name steps for the cluster layout, Argo CD bootstrap, Morpheus catalog setup |
 | `gitops` | What Argo CD runs: cert-manager, Traefik, Argo CD, GPU Operator, storage, Loki, Grafana, the AI chat chart |
 | `morpheus` | Files the catalog setup loads into Morpheus: blueprint specs, the remove task, catalog logos |
+| `morpheus-dashboard-plugin` | "AI on HKS" Morpheus dashboard: chats, approvals, GPU and cost per chat |
 
 ## How it fits together
 
@@ -34,6 +35,8 @@ No passwords, keys or Terraform state are in this repo. They stay on the machine
 5. Argo CD then follows `gitops/root-app.yaml`: every file in `gitops/apps` is an app it keeps in sync with Git.
 6. `scripts/setup-morpheus-catalog.sh` sets up the Morpheus side: the "Private AI chat" blueprint and catalog
    item, the "Remove AI chat" item, the developer role and user, and the approvals. It is safe to run again.
+7. `scripts/setup-morpheus-dashboard.sh` installs the "AI on HKS" dashboard on Operations > Dashboard, with
+   Approve and Reject buttons for waiting orders.
 
 ## The AI chat, step by step
 
@@ -90,6 +93,12 @@ When all Argo CD apps are healthy, set up the Morpheus catalog:
 
 ```bash
 scripts/setup-morpheus-catalog.sh <file with MORPHEUS_URL and MORPHEUS_TOKEN> <file with APPS_USER and APPS_PASSWORD>
+```
+
+Then the dashboard (jar from the releases page, or `morpheus-dashboard-plugin/build.sh`):
+
+```bash
+KUBECONFIG=<kubeconfig> scripts/setup-morpheus-dashboard.sh <file with MORPHEUS_URL and MORPHEUS_TOKEN> <jar>
 ```
 
 ## Notes

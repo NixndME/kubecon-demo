@@ -1,0 +1,223 @@
+<div class="aih" id="aih-root">
+<style>
+/* Morpheus 9 design tokens switch with light and dark mode; the fallbacks keep older themes readable */
+.aih{--t-text:var(--hpe-color-text-default,inherit);--t-strong:var(--hpe-color-text-strong,inherit);--t-weak:var(--hpe-color-text-weak,#7d8a94);
+ --t-line:var(--hpe-color-border-weak,rgba(125,138,148,.35));--t-front:var(--hpe-color-background-front,transparent);
+ --t-contrast:var(--hpe-color-background-contrast,rgba(125,138,148,.08));--t-brand:var(--hpe-button-primary-rest-background,#01A982);
+ --t-onbrand:var(--hpe-button-primary-rest-textColor,#fff);--t-ok:#17a673;--t-warn:#c7881a;--t-crit:var(--hpe-color-border-critical,#cc1f1a);--t-info:#2f7fc1;
+ color:var(--t-text);font-size:14px;width:100%}
+.aih *{box-sizing:border-box}
+.aih-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 18px;padding:14px 18px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-front)}
+.aih-head h3{margin:0;font-size:20px;font-weight:600;color:var(--t-strong);text-transform:none}
+.aih-sub{color:var(--t-weak);font-size:13px}
+.aih-spacer{flex:1}
+.aih-btn{display:inline-flex;align-items:center;justify-content:center;min-width:96px;height:32px;padding:0 18px;border-radius:9999px;border:1px solid var(--t-line);
+ background:transparent;color:var(--t-text);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer}
+.aih-btn:hover{border-color:var(--t-brand);color:var(--t-text);text-decoration:none}
+.aih-btn-primary{background:var(--t-brand);border-color:var(--t-brand);color:var(--t-onbrand)}
+.aih-btn-primary:hover{color:var(--t-onbrand);filter:brightness(1.08)}
+.aih-btn-danger{color:var(--t-crit);border-color:var(--t-crit)}
+.aih-alert{padding:10px 14px;margin:0 0 14px;border-radius:8px;border-left:4px solid var(--t-info);background:var(--t-contrast)}
+.aih-alert-error{border-left-color:var(--t-crit)}
+.aih-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.aih-kpi{padding:14px 16px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-front);min-height:104px}
+.aih-kpi-label{font-size:12px;color:var(--t-weak);text-transform:uppercase;letter-spacing:.04em}
+.aih-kpi-value{font-size:30px;font-weight:600;line-height:1.2;margin:6px 0 2px;color:var(--t-strong)}
+.aih-kpi-note{font-size:12px;color:var(--t-weak)}
+.aih-ok{color:var(--t-ok)}.aih-warn{color:var(--t-warn)}.aih-crit{color:var(--t-crit)}.aih-info{color:var(--t-info)}.aih-muted{color:var(--t-weak)}
+.aih-meter{height:8px;border-radius:9999px;background:var(--t-contrast);overflow:hidden;margin-top:8px;display:flex}
+.aih-meter span{display:block;height:100%}
+.aih-card{padding:16px 18px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-front);margin:0 0 18px}
+.aih-card h4{margin:0 0 12px;font-size:15px;font-weight:600;color:var(--t-strong);text-transform:none}
+.aih-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.aih-cols .aih-card{margin:0 0 18px}
+.aih-row{display:grid;grid-template-columns:150px 70px minmax(150px,1.4fr) 110px 70px 130px 70px 80px 80px 90px;gap:10px;align-items:center;padding:10px 12px;font-size:13px}
+.aih-rowhead{color:var(--t-weak);font-size:12px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--t-line)}
+.aih details{border-bottom:1px solid var(--t-line)}
+.aih details>summary{list-style:none;cursor:pointer}
+.aih details>summary::-webkit-details-marker{display:none}
+.aih details>summary:hover{background:var(--t-contrast)}
+.aih details[open]>summary{background:var(--t-contrast)}
+.aih-name{font-weight:600;color:var(--t-strong);display:flex;align-items:center;gap:8px}
+.aih-dot{width:10px;height:10px;border-radius:3px;flex:none}
+.aih-detail{padding:12px 16px 16px;background:var(--t-contrast)}
+.aih-facts{display:flex;flex-wrap:wrap;gap:22px;margin:0 0 12px}
+.aih-facts b{color:var(--t-strong)}
+.aih table{width:100%;border-collapse:collapse;font-size:13px}
+.aih th{text-align:left;font-weight:500;color:var(--t-weak);font-size:12px;padding:6px 8px;border-bottom:1px solid var(--t-line)}
+.aih td{padding:7px 8px;border-bottom:1px solid var(--t-line);vertical-align:top;color:var(--t-text)}
+/* Morpheus stripes tables; this one stays plain */
+.aih table tr,.aih table tbody tr:nth-child(odd),.aih table tbody tr:nth-child(even),.aih table th,.aih table td{background:transparent!important}
+.aih td.aih-q{max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aih-appr{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--t-line)}
+.aih-appr:last-child{border-bottom:0}
+.aih-appr form{margin:0}
+.aih-segs{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--t-line);margin:4px 0 10px}
+.aih-segs span{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;padding:0 4px}
+.aih-segs span.aih-free{background:var(--t-contrast);color:var(--t-weak)}
+.aih-stats{display:flex;gap:22px;margin:4px 0 8px}
+.aih-stats b{font-size:18px;color:var(--t-strong)}
+.aih-kv{display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:13px}
+.aih-kv b{color:var(--t-strong);text-align:right}
+.aih-kv .aih-sep{grid-column:1/-1;border-top:1px solid var(--t-line);margin:4px 0}
+.aih-act{display:grid;grid-template-columns:52px 14px minmax(180px,.9fr) minmax(0,2fr);gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--t-line);font-size:13px}
+.aih-act:last-child{border-bottom:0}
+.aih-act{height:32px;padding:0}
+.aih-act>*{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 6 lines show, the rest scroll */
+.aih-act-scroll{max-height:192px;overflow-y:auto;padding-right:4px}
+.aih-adot{width:9px;height:9px;border-radius:50%;background:currentColor}
+.aih-plat{display:flex;flex-wrap:wrap;gap:28px;font-size:13px;padding:12px 18px;border:1px solid var(--t-line);border-radius:12px;background:var(--t-front)}
+.aih-plat b{color:var(--t-strong)}
+.aih-pc{display:grid;grid-template-columns:88px 112px 56px 80px 60px 50px 50px 60px 70px 72px 70px 70px 72px minmax(130px,1fr);gap:5px;align-items:center;padding:8px 10px;font-size:12.5px;border-bottom:1px solid var(--t-line)}
+.aih-pc>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 10 rows show, the rest scroll; header and total stay */
+.aih-pc-body{max-height:351px;overflow-y:auto}
+.aih-pc-body .aih-pc{height:35px}
+.aih-pc.aih-sum{border-top:1px solid var(--t-line)}
+.aih-pc.aih-rowhead{font-size:11px;line-height:1.25;align-items:end}
+.aih-pc.aih-rowhead>span{white-space:normal}
+.aih-pc.aih-sum{font-weight:600;color:var(--t-strong);border-bottom:0}
+.aih-ibar{height:7px;border-radius:9999px;background:var(--t-contrast);overflow:hidden;display:inline-block;width:28px;vertical-align:middle;margin-right:5px}
+.aih-ibar span{display:block;height:100%}
+.aih-bars{display:grid;grid-template-columns:110px minmax(0,1fr) 70px;gap:6px 10px;align-items:center;font-size:12.5px}
+.aih-bars .aih-track{display:flex;height:16px;border-radius:4px;overflow:hidden}
+.aih-bars .aih-track span{display:block;height:100%}
+.aih-legend{display:flex;gap:16px;font-size:12px;color:var(--t-weak);margin:10px 0 0}
+.aih-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.aih-scroll{overflow-x:auto}
+.aih-bars-scroll{max-height:218px;overflow-y:auto;padding-right:4px}
+@media (max-width:1300px){.aih-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.aih-cols{grid-template-columns:1fr}}
+</style>
+
+<div class="aih-head">
+  <h3>AI on HKS</h3>
+  <span class="aih-sub">{{#if gpu}}{{gpu.name}} {{gpu.total}} · {{/if}}Updated <span data-ms="{{updatedMs}}">{{updated}}</span></span>
+  <span class="aih-spacer"></span>
+  {{#if links.grafana}}<a class="aih-btn" href="{{links.grafana}}" target="_blank" rel="noopener">Open Grafana</a>{{/if}}
+  {{#if links.cost}}<a class="aih-btn" href="{{links.cost}}" target="_blank" rel="noopener">Cost in Grafana</a>{{/if}}
+  {{#if links.argocd}}<a class="aih-btn" href="{{links.argocd}}" target="_blank" rel="noopener">Open Argo CD</a>{{/if}}
+</div>
+
+{{#if flash}}<div class="aih-alert">{{flash}}</div>{{/if}}
+{{#each errors}}<div class="aih-alert aih-alert-error">{{this}}</div>{{/each}}
+
+{{#if kpi}}
+<div class="aih-kpis">
+  <div class="aih-kpi"><div class="aih-kpi-label">Chats running</div><div class="aih-kpi-value aih-ok">{{running}}</div></div>
+  <div class="aih-kpi"><div class="aih-kpi-label">Waiting for GPU</div><div class="aih-kpi-value {{#if waiting}}aih-warn{{/if}}">{{waiting}}</div></div>
+  <div class="aih-kpi"><div class="aih-kpi-label">GPU memory booked</div><div class="aih-kpi-value">{{gpu.booked}}</div>
+    <div class="aih-kpi-note">of {{gpu.total}}</div><div class="aih-meter"><span style="width:{{gpu.bookedPct}}%;background:var(--t-brand)"></span></div></div>
+  <div class="aih-kpi"><div class="aih-kpi-label">Approvals waiting</div><div class="aih-kpi-value {{#if approvalsWaiting}}aih-warn{{/if}}">{{#if approvalsWaiting}}{{approvalsWaiting}}{{else}}0{{/if}}</div>{{#if approvalsWaiting}}<div class="aih-kpi-note">See below</div>{{/if}}</div>
+  <div class="aih-kpi"><div class="aih-kpi-label">Questions, 24 h</div><div class="aih-kpi-value aih-info">{{kpi.questions}}</div><div class="aih-kpi-note">{{kpi.questionsCost}} used</div></div>
+  <div class="aih-kpi"><div class="aih-kpi-label">Cost, 24 h</div><div class="aih-kpi-value">{{kpi.cost}}</div><div class="aih-kpi-note">{{kpi.idle}} idle</div></div>
+</div>
+{{/if}}
+
+{{#if approvals}}
+<div class="aih-card">
+  <h4>Approvals waiting</h4>
+  {{#each approvals}}
+  <div class="aih-appr">
+    <span class="aih-name">{{name}}</span>
+    <span>{{#if owner}}{{owner}}{{else}}{{by}}{{/if}} · {{kind}}{{#if size}} · {{size}}{{/if}}{{#if model}} · {{model}}{{/if}}</span>
+    <span class="aih-muted">{{ago}}</span>
+    <span class="aih-spacer"></span>
+    {{#if ../canApprove}}
+    <form method="post" action="/plugin/hks-ai-dashboard/approval"><input type="hidden" name="{{../csrf.param}}" value="{{../csrf.value}}"><input type="hidden" name="item" value="{{itemId}}"><input type="hidden" name="do" value="approve"><button class="aih-btn aih-btn-primary" type="submit">Approve</button></form>
+    <form method="post" action="/plugin/hks-ai-dashboard/approval"><input type="hidden" name="{{../csrf.param}}" value="{{../csrf.value}}"><input type="hidden" name="item" value="{{itemId}}"><input type="hidden" name="do" value="deny"><button class="aih-btn aih-btn-danger" type="submit">Reject</button></form>
+    {{/if}}
+  </div>
+  {{/each}}
+</div>
+{{/if}}
+
+{{#if kpi}}
+<div class="aih-card">
+  <h4>AI chats</h4>
+  <div class="aih-row aih-rowhead"><span>App</span><span>Type</span><span>Owner</span><span>Model</span><span>Size</span><span>Status</span><span>GPU</span><span>Questions</span><span>Cost 24 h</span><span>Open</span></div>
+  {{#each chats}}
+  <details data-key="{{name}}">
+    <summary class="aih-row">
+      <span class="aih-name"><i class="aih-dot" style="background:{{color}}"></i>{{name}}</span><span>{{type}}</span><span>{{owner}}</span><span>{{model}}</span><span>{{size}}</span>
+      <span class="aih-{{statusClass}}">{{status}}</span><span>{{booked}}</span><span>{{questions}}</span><span>{{cost}}</span>
+      <span><a href="{{page}}" target="_blank" rel="noopener">Open</a>{{#if appId}} · <a href="/provisioning/apps/{{appId}}">App</a>{{/if}}</span>
+    </summary>
+    <div class="aih-detail">
+      <div class="aih-facts"><span>Kept running <b>{{kept}}</b></span><span>Questions <b>{{qcost}}</b></span><span>Idle <b>{{idle}}%</b></span><span>Per question <b>{{perQuestion}}</b></span><span>GPU used now <b>{{used}}</b></span></div>
+      {{#if list}}
+      <table>
+        <thead><tr><th>Time</th><th>Who</th><th>Question</th><th>GPU s</th><th>CPU s</th><th>Cost</th></tr></thead>
+        <tbody>{{#each list}}<tr><td data-ms="{{ms}}">{{when}}</td><td>{{who}}</td><td class="aih-q" title="{{question}}">{{question}}</td><td>{{gpu}}</td><td>{{cpu}}</td><td>{{cost}}</td></tr>{{/each}}</tbody>
+      </table>
+      {{#if more}}<p class="aih-muted" style="margin:8px 0 0">{{more}} more in Grafana.</p>{{/if}}
+      {{else}}<span class="aih-muted">No questions in the last 24 hours.</span>{{/if}}
+    </div>
+  </details>
+  {{else}}
+  <div class="aih-row"><span class="aih-muted" style="grid-column:1/-1">No chats running. Order one from the Service Catalog.</span></div>
+  {{/each}}
+</div>
+
+{{#if perChat}}
+<div class="aih-card">
+  <h4>Cost per chat, last 24 hours</h4>
+  <div class="aih-scroll">
+  <div class="aih-pc aih-rowhead"><span>Chat</span><span>Owner</span><span>Size</span><span>Model</span><span>Asked</span><span>Busy</span><span>Usage</span><span>CPU per GPU s</span><span>Total</span><span>Question cost</span><span>Idle</span><span>Idle %</span><span>Per question</span><span>Advice</span></div>
+  <div class="aih-pc-body">
+  {{#each perChat}}
+  <div class="aih-pc"><span class="aih-name">{{chat}}</span><span title="{{owner}}">{{owner}}</span><span>{{size}}</span><span title="{{model}}">{{model}}</span><span>{{questions}}</span><span>{{busy}}</span><span>{{usage}}</span>
+    <span class="aih-{{coresClass}}">{{cores}}</span><span>{{total}}</span><span>{{qcost}}</span><span>{{idle}}</span>
+    <span><i class="aih-ibar"><span style="width:{{idlePct}}%;background:var(--t-warn)"></span></i>{{idlePct}}%</span><span>{{perQuestion}}</span><span class="aih-{{adviceClass}}" title="{{advice}}">{{advice}}</span></div>
+  {{/each}}
+  </div>
+  <div class="aih-pc aih-sum"><span>Total</span><span></span><span></span><span></span><span>{{perChatTotal.questions}}</span><span></span><span></span><span></span><span>{{perChatTotal.total}}</span><span>{{perChatTotal.qcost}}</span><span>{{perChatTotal.idle}}</span><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<div class="aih-cols">
+  <div class="aih-card">
+    <h4>Questions and idle per chat</h4>
+    <div class="aih-bars-scroll"><div class="aih-bars">{{#each perChat}}<span>{{chat}}</span><span class="aih-track"><span style="width:{{qPct}}%;background:var(--t-ok)" title="Questions {{qcost}}"></span><span style="width:{{iPct}}%;background:var(--t-warn)" title="Idle {{idle}}"></span></span><b>{{total}}</b>{{/each}}</div></div>
+    <div class="aih-legend"><span><i style="background:var(--t-ok)"></i>Questions</span><span><i style="background:var(--t-warn)"></i>Idle</span></div>
+  </div>
+  <div class="aih-card">
+    <h4>Cost by part per chat</h4>
+    <div class="aih-bars-scroll"><div class="aih-bars">{{#each perChat}}<span>{{chat}}</span><span class="aih-track"><span style="width:{{gPct}}%;background:var(--t-info)" title="GPU"></span><span style="width:{{cPct}}%;background:#7630EA" title="CPU"></span><span style="width:{{mPct}}%;background:#8e8e8e" title="Memory"></span></span><b>{{total}}</b>{{/each}}</div></div>
+    <div class="aih-legend"><span><i style="background:var(--t-info)"></i>GPU</span><span><i style="background:#7630EA"></i>CPU</span><span><i style="background:#8e8e8e"></i>Memory</span></div>
+  </div>
+</div>
+{{/if}}
+
+<div class="aih-cols">
+  <div class="aih-card">
+    <h4>GPU: who has what</h4>
+    <div class="aih-segs">{{#each gpu.segments}}<span style="width:{{pct}}%;background:{{color}}" title="{{name}} {{gb}}">{{name}} {{gb}}</span>{{/each}}<span class="aih-free" style="width:{{gpu.freePct}}%">free {{gpu.free}}</span></div>
+    <div class="aih-stats"><span>Busy <b>{{gpu.busy}}%</b></span><span>Temperature <b>{{gpu.temp}} °C</b></span><span>Power <b>{{gpu.power}} W</b></span></div>
+    {{#if gpu.spark}}<div class="aih-muted" style="font-size:12px;margin:8px 0 2px">Busy, last hour</div>
+    <svg viewBox="0 0 300 40" preserveAspectRatio="none" style="width:100%;height:48px"><polyline points="{{gpu.spark}}" fill="none" stroke="var(--t-brand)" stroke-width="1.6"/></svg>{{/if}}
+  </div>
+  <div class="aih-card">
+    <h4>Cost, last 24 hours</h4>
+    <div class="aih-kv">
+      <span>Questions</span><b>{{cost.questions}}</b>
+      <span>Kept running</span><b>{{cost.kept}}</b>
+      <span>Of that idle</span><b class="aih-warn">{{cost.idle}}</b>
+      <span>Platform (master, disks)</span><b>{{cost.platform}}</b>
+      <span>Per question, average</span><b>{{cost.perQuestion}}</b>
+      <span class="aih-sep"></span>
+      {{#each cost.prices}}<span class="aih-muted">{{label}}</span><b class="aih-muted">{{value}}</b>{{/each}}
+    </div>
+  </div>
+</div>
+
+<div class="aih-card">
+  <h4>Activity</h4>
+  <div class="aih-act-scroll">{{#each activity}}<div class="aih-act"><span class="aih-muted" data-ms="{{ms}}">{{when}}</span><i class="aih-adot aih-{{cls}}"></i><b>{{text}}</b><span class="aih-muted" title="{{detail}}">{{detail}}</span></div>{{else}}<span class="aih-muted">Nothing in the last 24 hours.</span>{{/each}}</div>
+</div>
+
+{{#if platform}}
+<div class="aih-plat"><span>Argo CD <b>{{platform.argoOk}}/{{platform.argoAll}}</b> healthy</span><span>Nodes <b>{{platform.nodesOk}}/{{platform.nodesAll}}</b> ready</span><span>HAMi <b>{{#if platform.hami}}on{{else}}off{{/if}}</b></span><span>Loki <b>on</b></span></div>
+{{/if}}
+{{/if}}
+</div>

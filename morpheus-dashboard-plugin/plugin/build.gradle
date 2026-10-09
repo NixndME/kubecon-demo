@@ -1,0 +1,73 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "com.github.johnrengelman:shadow:8.1.1"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPipelineVersion"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'asset-pipeline'
+
+group = 'com.morpheuslab'
+version = '0.1.13'
+
+java {
+    // build on JDK 17, target 11: the appliance classloader rejects 17 bytecode
+    sourceCompatibility = JavaVersion.toVersion('1.11')
+    targetCompatibility = JavaVersion.toVersion('1.11')
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations { provided }
+
+dependencies {
+    provided "com.morpheusdata:morpheus-plugin-api:$morphPluginApiVersion"
+    provided "org.codehaus.groovy:groovy-all:$groovyVersion"
+    provided "javax.servlet:javax.servlet-api:3.1.0"
+    implementation "org.slf4j:slf4j-api:$slf4jVersion"
+    testImplementation "org.spockframework:spock-core:$spockVersion"
+}
+
+sourceSets {
+    main { compileClasspath += configurations.provided }
+    test {
+        compileClasspath += configurations.provided
+        runtimeClasspath += configurations.provided
+    }
+}
+
+test { useJUnitPlatform() }
+
+jar {
+    manifest {
+        attributes(
+            'Plugin-Class': 'com.morpheuslab.aidash.AiDashPlugin',
+            'Plugin-Version': archiveVersion.get(),
+            'Morpheus-Name': 'AI on HKS',
+            'Morpheus-Organization': 'morpheuslab',
+            'Morpheus-Code': 'hks-ai-dashboard',
+            'Morpheus-Description': 'Dashboard for private AI chats on HKS: chats, GPU, approvals and cost.',
+            'Morpheus-Labels': 'Plugin,Kubernetes,Dashboard,AI,GPU',
+            'Morpheus-Min-Appliance-Version': '9.0.0'
+        )
+    }
+}
+
+assets { packagePlugin = false }
+
+shadowJar {
+    archiveClassifier.set('all')
+    exclude 'assets/webjars/**'
+}
+tasks.assemble.dependsOn tasks.shadowJar
