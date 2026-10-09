@@ -33,9 +33,11 @@ upsert() {
 echo "==> Argo CD token for the morpheus account"
 admin=$(jq -n --arg u "$APPS_USER" --arg p "$APPS_PASSWORD" '{username:$u,password:$p}' \
   | curl -sf -H 'Content-Type: application/json' -d @- "$ARGOCD/api/v1/session" | jq -r .token)
+# Token ids must be unique, so each run makes a new one; older ones are removed at the end
+TOKEN_ID="morpheus-$(date +%Y%m%d%H%M%S)"
 TOKEN=$(curl -sf -X POST -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' \
-  -d '{"id":"morpheus"}' "$ARGOCD/api/v1/account/morpheus/token" | jq -r .token)
-[ -n "$TOKEN" ] && [ "$TOKEN" != null ]
+  -d "{\"id\":\"$TOKEN_ID\"}" "$ARGOCD/api/v1/account/morpheus/token" | jq -r .token)
+[ -n "$TOKEN" ] && [ "$TOKEN" != null ] || { echo "Could not make an Argo CD token" >&2; exit 1; }
 
 echo "==> Argo CD plugin settings"
 pid=$(api GET "/api/plugins?max=100" | jq -r '.plugins[] | select(.code=="argocd") | .id')
@@ -148,6 +150,11 @@ pol=$(api GET "/api/policies?max=500" | jq -r '.policies[] | select(.name=="Appr
 [ -n "$pol" ] || api POST /api/policies "$(jq -n --argjson u "$user" '{policy:{name:"Approve AI chat orders",
   description:"An admin approves every AI chat order from the developer user", policyType:{code:"workflowApproval"},
   enabled:true, refType:"User", refId:$u, user:{id:$u}, config:{accountIntegrationId:-100}}}')" >/dev/null
+
+echo "==> Remove older Argo CD tokens of the morpheus account"
+for t in $(curl -sf -H "Authorization: Bearer $admin" "$ARGOCD/api/v1/account/morpheus" | jq -r --arg k "$TOKEN_ID" '.tokens[]? | select(.id != $k) | .id'); do
+  curl -sf -X DELETE -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' "$ARGOCD/api/v1/account/morpheus/token/$t" >/dev/null || true
+done
 
 echo "Done. Catalog items $c_order and $c_remove, role $role, user $DEV_USER ($user)."
 echo "The developer switches to the catalog at $M/user-settings/switch-persona/serviceCatalog"
