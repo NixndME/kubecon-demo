@@ -81,7 +81,7 @@ models=$(upsert /api/library/option-type-lists optionTypeLists name "AI models" 
     {name:"Llama 3.1 8B (smarter, needs Large)",value:"llama3.1:8b"}]|tojson)}}')")
 sizes=$(upsert /api/library/option-type-lists optionTypeLists name "AI sizes" optionTypeList "$(jq -n '{optionTypeList:{
   name:"AI sizes", type:"manual", description:"GPU memory for one chat, enforced by HAMi",
-  initialDataset:([{name:"Small: 3 GB of GPU memory",value:"small"},{name:"Medium: 5 GB of GPU memory, faster",value:"medium"},
+  initialDataset:([{name:"Small: 3 GB of GPU memory",value:"small"},{name:"Medium: 4 GB of GPU memory, faster",value:"medium"},
     {name:"Large: 8 GB of GPU memory, for the 8B model",value:"large"}]|tojson)}}')")
 translate='for (var i = 0; i < data.items.length; i++) { var a = data.items[i]; var l = a.metadata.labels || {}; var o = (a.metadata.annotations || {})["kubecon-demo/owner"] || "?"; var p = {}; var ps = (a.spec.source.helm || {}).parameters || []; for (var j = 0; j < ps.length; j++) { p[ps[j].name] = ps[j].value; } var h = (a.status && a.status.health && a.status.health.status) || "?"; results.push({name: a.metadata.name + " (" + o + ", " + p.model + ", " + (p.size || "small") + ", " + (h == "Healthy" ? "running" : h == "Progressing" ? "starting or waiting for a GPU slice" : h) + ")", value: a.metadata.name}); }'
 chats=$(upsert /api/library/option-type-lists optionTypeLists name "AI chats (live)" optionTypeList "$(jq -n \

@@ -54,7 +54,7 @@
       "transparent": true,
       "options": {
         "mode": "markdown",
-        "content": "### Private AI chats on HKS\nEach chat is ordered from the Morpheus catalog and deployed by Argo CD. It gets its own share of GPU memory (Small 3 GB, Medium 5 GB, Large 8 GB), enforced by HAMi. Numbers follow the time range at the top right."
+        "content": "### Private AI chats on HKS\nEach chat is ordered from the Morpheus catalog and deployed by Argo CD. It gets its own share of GPU memory (Small 3 GB, Medium 4 GB, Large 8 GB), enforced by HAMi. Numbers follow the time range at the top right."
       }
     },
     {

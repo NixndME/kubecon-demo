@@ -21,7 +21,7 @@ documents: false
 embedModel: nomic-embed-text
 sizes:
   small: 3072
-  medium: 5120
+  medium: 4096
   large: 8192
 
 ollama:

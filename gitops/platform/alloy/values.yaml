@@ -6,12 +6,12 @@ alloy:
         role = "pod"
       }
 
-      // Only the AI chat namespaces: ai-<first name> and the main ai-chat
+      // Only the AI chat namespaces (ai-<first name>) and the cost recorder (chat-cost)
       discovery.relabel "ai" {
         targets = discovery.kubernetes.pods.targets
         rule {
           source_labels = ["__meta_kubernetes_namespace"]
-          regex         = "ai-.*"
+          regex         = "ai-.*|chat-cost"
           action        = "keep"
         }
         rule {

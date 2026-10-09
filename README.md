@@ -61,9 +61,9 @@ No passwords, keys or Terraform state are in this repo. They stay on the machine
 
 - [HAMi](https://github.com/Project-HAMi/HAMi) shares the GPU with real limits. Each chat gets a fixed amount of GPU
   memory and can not use more, so one chat can never crash another.
-- Sizes: Small 3 GB, Medium 5 GB (the 3B models run fully on the GPU), Large 8 GB (for the 8B model).
+- Sizes: Small 3 GB, Medium 4 GB (the 3B models run fully on the GPU), Large 8 GB (for the 8B model).
   Compute is shared: a chat can use the whole GPU when the others are idle.
-- How many chats fit depends on GPU memory. The T4 (15 GB) holds 5 Small chats. A bigger GPU holds more.
+- How many chats fit depends on GPU memory. The T4 (15 GB) holds 5 Small chats, or one Small, one Medium and one Large. A bigger GPU holds more.
 - When the GPU is full, a new chat waits and starts by itself as soon as another chat is removed.
 - HAMi replaces the GPU Operator's device plugin. It uses the `nvidia-legacy` runtime class from the GPU Operator.
 
