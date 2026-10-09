@@ -1,0 +1,20 @@
+# HAMi: shares the GPU with real limits. Each pod asks for GPU memory (nvidia.com/gpumem, in MiB) and can ask for a
+# share of compute (nvidia.com/gpucores, in percent). HAMi schedules it and keeps it inside those limits.
+# It replaces the GPU Operator's device plugin and time-slicing.
+scheduler:
+  kubeScheduler:
+    image:
+      registry: registry.k8s.io
+      repository: kube-scheduler
+      tag: v1.35.9
+  service:
+    type: ClusterIP
+
+devicePlugin:
+  # Up to 6 pods on one GPU; GPU memory decides how many really fit
+  deviceSplitCount: 6
+  # GPU nodes, as labelled by the GPU Operator (no manual label needed after a rebuild)
+  nvidiaNodeSelector:
+    nvidia.com/gpu.present: "true"
+  service:
+    type: ClusterIP

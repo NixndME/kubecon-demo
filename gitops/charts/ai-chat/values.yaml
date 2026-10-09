@@ -11,6 +11,11 @@ chatPassword: ""
 
 domain: kubeforge.live
 
+# GPU share for the chat, enforced by HAMi: memory in MiB, compute in percent (0 means no compute limit)
+gpu:
+  memoryMiB: 3072
+  cores: 0
+
 ollama:
   image: ollama/ollama:0.40.0
   # All chats share one model folder on the GPU node, so a model is downloaded only once

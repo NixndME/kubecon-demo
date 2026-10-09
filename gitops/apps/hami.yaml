@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hami
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  sources:
+    - repoURL: https://project-hami.github.io/HAMi/
+      chart: hami
+      targetRevision: 2.10.0
+      helm:
+        releaseName: hami
+        valueFiles:
+          - $values/gitops/platform/hami/values.yaml
+    - repoURL: https://github.com/NixndME/kubecon-demo.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hami-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

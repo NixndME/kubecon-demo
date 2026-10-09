@@ -8,24 +8,9 @@ toolkit:
 
 # Time-slicing: each GPU is offered as 4, so 4 pods can each get "1 GPU" and take turns on it.
 # GPU memory is shared, not split: the apps on one GPU must fit in its memory together.
+# HAMi (gitops/platform/hami) is the device plugin: it shares the GPU with memory and compute limits
 devicePlugin:
-  enabled: true
-  config:
-    create: true
-    name: time-slicing-config
-    default: any
-    data:
-      any: |-
-        version: v1
-        flags:
-          migStrategy: none
-        sharing:
-          timeSlicing:
-            renameByDefault: false
-            failRequestsGreaterThanOne: true
-            resources:
-              - name: nvidia.com/gpu
-                replicas: 4
+  enabled: false
 
 dcgmExporter:
   enabled: true

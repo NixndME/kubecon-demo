@@ -1,4 +1,4 @@
-# Ollama: runs the chat's model on one GPU slice
+# Ollama: runs the chat's model on its GPU share
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -36,6 +36,10 @@ spec:
           resources:
             limits:
               nvidia.com/gpu: 1
+              nvidia.com/gpumem: {{ .Values.gpu.memoryMiB | quote }}
+              {{- if .Values.gpu.cores }}
+              nvidia.com/gpucores: {{ .Values.gpu.cores | quote }}
+              {{- end }}
           volumeMounts:
             - name: models
               mountPath: /models
