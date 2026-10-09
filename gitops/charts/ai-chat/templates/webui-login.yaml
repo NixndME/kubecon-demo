@@ -1,6 +1,8 @@
 # The chat's own login: the orderer's email and the password chosen in the order
 {{- if not .Values.chatPassword }}{{ fail "chatPassword is required" }}{{ end }}
 {{- if not .Values.ownerEmail }}{{ fail "ownerEmail is required" }}{{ end }}
+{{- /* Morpheus templates add a backslash before $; the password rule allows no backslashes, so drop them all */}}
+{{- $password := .Values.chatPassword | replace "\\" "" }}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -9,7 +11,7 @@ metadata:
 type: Opaque
 stringData:
   WEBUI_ADMIN_EMAIL: {{ .Values.ownerEmail | lower | quote }}
-  WEBUI_ADMIN_PASSWORD: {{ .Values.chatPassword | quote }}
+  WEBUI_ADMIN_PASSWORD: {{ $password | quote }}
   WEBUI_ADMIN_NAME: {{ .Values.ownerName | default .Values.name | quote }}
   # Stable session key, so logins survive restarts
-  WEBUI_SECRET_KEY: {{ printf "%s-%s-ai-chat" .Values.name .Values.chatPassword | sha256sum | quote }}
+  WEBUI_SECRET_KEY: {{ printf "%s-%s-ai-chat" .Values.name $password | sha256sum | quote }}

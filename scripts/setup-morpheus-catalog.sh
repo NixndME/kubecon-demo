@@ -58,7 +58,7 @@ pool=$(api GET "/api/clusters/$cluster/namespaces?max=500" | jq -r '.namespaces[
 [ -n "$pool" ] || { echo "No argocd namespace in $CLUSTER" >&2; exit 1; }
 
 echo "==> Remove items from older versions of this script"
-for n in "Remove AI chat:catalog-item-types:catalogItemTypes" "Order private AI chat:task-sets:taskSets" "Remove private AI chat:task-sets:taskSets" \
+for n in "Order private AI chat:task-sets:taskSets" "Remove private AI chat:task-sets:taskSets" \
   "Make AI chat password:tasks:tasks" "Create private AI chat:tasks:tasks" "Show AI chat link:tasks:tasks" "Check AI chat remove confirm:tasks:tasks" \
   "AI owner name:library/option-types:optionTypes" "AI team name:library/option-types:optionTypes" "AI chat password:library/option-types:optionTypes"; do
   IFS=: read -r name path key <<<"$n"
