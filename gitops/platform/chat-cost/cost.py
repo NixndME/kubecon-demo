@@ -34,7 +34,9 @@ GPU_H = node - twin
 GPU_GB_H = GPU_H / gpu_mem_gb
 
 lock = Lock()
-state = {"since_ns": 0, "chats": {}, "last_question": {}}
+# Bump when the way questions are priced changes: the recorder then starts fresh
+STATE_VERSION = 3
+state = {"version": STATE_VERSION, "since_ns": 0, "chats": {}}
 
 
 def http_json(url):
@@ -154,10 +156,10 @@ def step():
             c["seconds"] += STEP
     if until <= since:
         return
-    # Open WebUI logs a question when its answer is done; the model server logs each call when it ends.
-    # A call belongs to the latest question logged no later than 3 s after the call ended (the answer itself,
-    # then the title, tags and follow-up suggestions). Look 10 minutes back and up to now for the neighbours,
-    # but price only the questions in [since, until), so each one is priced once.
+    # Open WebUI logs a question when it arrives; the model server logs each call when it ends, with its duration.
+    # A call belongs to the latest question that arrived before the call started (the answer itself, then the
+    # title, tags and follow-up suggestions). Look 10 minutes back and up to now for the neighbours, but price
+    # only the questions in [since, until), so each one is priced once.
     questions = {}
     for ts, st, line in loki('{namespace=~"ai-.+", container="webui"} |= "audit:write" |= "/api/chat/completions"', since - 600 * 10**9, now_ns):
         q = question_of(line)
@@ -172,11 +174,12 @@ def step():
         for ns, qs in questions.items():
             owned = {n: [] for n in range(len(qs))}
             for call in calls.get(ns, []):
-                if call[2].startswith("/api/embed"):
-                    # Reading a document (indexing or search) happens before the answer: it belongs to the next question
-                    n = min((k for k, (ts, _) in enumerate(qs) if ts >= call[0] - 3 * 10**9), default=None)
+                start = call[0] - int(call[1] * 1e9)
+                if call[2].startswith("/api/embed") and not any(ts <= start + 5 * 10**9 <= ts + 30 * 10**9 for ts, _ in qs):
+                    # Indexing an uploaded file happens before anyone asks: it belongs to the next question
+                    n = min((k for k, (ts, _) in enumerate(qs) if ts >= start), default=None)
                 else:
-                    n = max((k for k, (ts, _) in enumerate(qs) if ts <= call[0] + 3 * 10**9), default=None)
+                    n = max((k for k, (ts, _) in enumerate(qs) if ts <= start + 5 * 10**9), default=None)
                 if n is not None:
                     owned[n].append(call)
             for n, (ts, q) in enumerate(qs):
@@ -234,7 +237,9 @@ def loop():
 
 if __name__ == "__main__":
     if os.path.exists(STATE):
-        state.update(json.load(open(STATE)))
+        saved = json.load(open(STATE))
+        if saved.get("version") == STATE_VERSION:
+            state.update(saved)
     print(json.dumps({"type": "start", "gpu_per_hour": round(GPU_H, 4), "gpu_memory_gb_per_hour": round(GPU_GB_H, 5),
                       "vcpu_per_hour": round(VCPU_H, 5), "memory_gb_per_hour": round(MEM_GB_H, 5)}), flush=True)
     Thread(target=loop, daemon=True).start()
