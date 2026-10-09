@@ -3,18 +3,18 @@
 #   - Argo CD token for the "morpheus" account, Argo CD plugin settings
 #   - Blueprint and catalog item "Private AI chat": each order is a Morpheus app holding an Argo CD app
 #   - Catalog item "Remove AI chat": pick a running chat, type its name, it is removed
-#   - Role "AI Developer", a developer user, and approval policies for that user's orders
+#   - Role "AI Developer" and approval of chat orders; a developer user only when DEV_USER is set
 # Usage: scripts/setup-morpheus-catalog.sh <morpheus env file> <login file>
 #   morpheus env file: MORPHEUS_URL, MORPHEUS_TOKEN (admin API token)
 #   login file: APPS_USER, APPS_PASSWORD (Argo CD admin; also the developer user's password)
-# Optional: DOMAIN (default kubeforge.live), REPO_URL, DEV_USER (default dev1), CLUSTER (default kubecon-hks)
+# Optional: DOMAIN (default kubeforge.live), REPO_URL, DEV_USER (makes a developer user with that name), CLUSTER (default kubecon-hks)
 set -euo pipefail
 
 set -a; . "${1:?morpheus env file}"; . "${2:?login file}"; set +a
 DOMAIN="${DOMAIN:-kubeforge.live}"
 ARGOCD="https://argocd.$DOMAIN"
 REPO_URL="${REPO_URL:-https://github.com/NixndME/kubecon-demo.git}"
-DEV_USER="${DEV_USER:-dev1}"
+DEV_USER="${DEV_USER:-}"
 CLUSTER="${CLUSTER:-kubecon-hks}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 M="${MORPHEUS_URL%/}"
@@ -177,13 +177,18 @@ for c in "$c_order" "$c_remove"; do api PUT "/api/roles/$role/update-catalog-ite
 for p in service-catalog:full service-catalog-dashboard:read service-catalog-inventory:full provisioning-execute-workflow:full executions:read apps:full services-cypher:none; do
   api PUT "/api/roles/$role/update-permission" "{\"permissionCode\":\"${p%%:*}\",\"access\":\"${p#*:}\"}" >/dev/null || echo "    could not set ${p%%:*}"
 done
-user=$(api GET "/api/users?max=500" | jq -r --arg u "$DEV_USER" '.users[] | select(.username==$u) | .id' | head -1)
-if [ -z "$user" ]; then
+user=""
+if [ -n "$DEV_USER" ]; then
+  user=$(api GET "/api/users?max=500" | jq -r --arg u "$DEV_USER" '.users[] | select(.username==$u) | .id' | head -1)
+fi
+if [ -n "$DEV_USER" ] && [ -z "$user" ]; then
   user=$(api POST /api/users "$(jq -n --arg u "$DEV_USER" --arg d "$DOMAIN" --arg p "$APPS_PASSWORD" --argjson r "$role" '{user:{
     username:$u, email:($u + "@" + $d), firstName:"Dev", lastName:"One", password:$p, roles:[{id:$r}], receiveNotifications:false}}')" | jq -r .user.id)
 fi
 # An admin approves chat orders (blueprint apps only follow group or cloud policies) and the developer's removals
-for t in "provisionApproval:Approve AI chat orders:ComputeSite:$group" "workflowApproval:Approve AI chat removals:User:$user"; do
+rules=("provisionApproval:Approve AI chat orders:ComputeSite:$group")
+[ -z "$user" ] || rules+=("workflowApproval:Approve AI chat removals:User:$user")
+for t in "${rules[@]}"; do
   IFS=: read -r code name rtype rid <<<"$t"
   old=$(api GET "/api/policies?max=500" | jq -r --arg n "$name" --arg c "$code" --arg r "$rtype" \
     '.policies[] | select(.name==$n and (.policyType.code!=$c or .refType!=$r)) | .id')
@@ -200,5 +205,5 @@ for t in $(curl -sf -H "Authorization: Bearer $admin" "$ARGOCD/api/v1/account/mo
   curl -sf -X DELETE -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' "$ARGOCD/api/v1/account/morpheus/token/$t" >/dev/null || true
 done
 
-echo "Done. Blueprint $blueprint, catalog items $c_order and $c_remove, role $role, user $DEV_USER ($user)."
+echo "Done. Blueprint $blueprint, catalog items $c_order and $c_remove, role $role${DEV_USER:+, user $DEV_USER ($user)}."
 echo "The developer switches to the catalog at $M/user-settings/switch-persona/serviceCatalog"
