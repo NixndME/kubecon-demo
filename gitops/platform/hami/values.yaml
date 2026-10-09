@@ -19,3 +19,6 @@ devicePlugin:
     nvidia.com/gpu.present: "true"
   service:
     type: ClusterIP
+  # NVIDIA support on the node comes from the "nvidia" runtime class (made by the GPU Operator);
+  # HAMi uses it for its plugin and adds it to every pod that asks for a GPU
+  runtimeClassName: nvidia
