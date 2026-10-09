@@ -189,7 +189,7 @@
       "id": 4,
       "type": "stat",
       "title": "GPU memory booked",
-      "description": "GPU memory promised to running chats, out of all GPU memory. The main chat at chat.kubeforge.live books 3 GB.",
+      "description": "GPU memory promised to running chats, out of all GPU memory. A new chat waits when there is not enough left.",
       "gridPos": {
         "x": 8,
         "y": 2,
