@@ -1,0 +1,17 @@
+# Set by the Morpheus catalog order
+team: demo
+model: llama3.2:3b
+requestedBy: ""
+
+domain: kubeforge.live
+# Login prompt shared with the Traefik dashboard (secret made by scripts/bootstrap-gitops.sh)
+loginMiddleware: traefik-dashboard-login@kubernetescrd
+
+ollama:
+  image: ollama/ollama:0.40.0
+  # All teams share one model folder on the GPU node, so a model is downloaded only once
+  modelCache: /mnt/hks-data/ollama-models
+
+webui:
+  image: ghcr.io/open-webui/open-webui:0.11.4
+  storage: 2Gi

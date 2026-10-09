@@ -1,0 +1,5 @@
+apiVersion: v2
+name: team-ai
+description: A private AI chat for one team, on one GPU slice
+version: 0.1.0
+appVersion: "1"
