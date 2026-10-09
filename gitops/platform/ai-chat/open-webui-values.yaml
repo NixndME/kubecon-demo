@@ -30,6 +30,8 @@ extraEnvVars:
     value: "false"
   - name: DEFAULT_MODELS
     value: llama3.2:3b
+  - name: ENABLE_EVALUATION_ARENA_MODELS
+    value: "false"
 
 extraEnvFrom:
   - secretRef:
