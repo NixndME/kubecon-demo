@@ -1,4 +1,4 @@
-# Grafana at https://grafana.<domain> with GPU dashboards. Reads the cluster's Prometheus.
+# Grafana at https://grafana.<domain> with GPU and AI chat dashboards. Reads the cluster's Prometheus and Loki.
 # The admin login comes from the secret "grafana-admin", made by scripts/bootstrap-gitops.sh, never stored in Git.
 admin:
   existingSecret: grafana-admin
@@ -38,6 +38,11 @@ datasources:
         url: http://prometheus-k8s.monitoring.svc:9090
         access: proxy
         isDefault: true
+      - name: Loki
+        uid: loki
+        type: loki
+        url: http://loki.loki.svc:3100
+        access: proxy
 
 dashboardProviders:
   dashboardproviders.yaml:

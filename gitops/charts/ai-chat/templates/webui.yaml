@@ -45,6 +45,15 @@ spec:
               value: "false"
             - name: DEFAULT_MODELS
               value: {{ .Values.model | quote }}
+            # Log each chat request (who asked what) to the pod log, for the Grafana dashboard
+            - name: AUDIT_LOG_LEVEL
+              value: REQUEST
+            - name: AUDIT_INCLUDED_PATHS
+              value: chat/completions
+            - name: ENABLE_AUDIT_STDOUT
+              value: "true"
+            - name: ENABLE_AUDIT_LOGS_FILE
+              value: "false"
           envFrom:
             - secretRef:
                 name: webui-login
