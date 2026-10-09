@@ -134,11 +134,16 @@ def record(ns, q, calls, info):
                       "cost_memory": round(cost["mem"], 8), "cost": round(sum(cost.values()), 8)}), flush=True)
 
 
+DELAY = 60 * 10**9
+BACKFILL = int(os.environ.get("BACKFILL_MINUTES", "120")) * 60 * 10**9
+
+
 def step():
     now_ns = time.time_ns()
-    since = state["since_ns"] or now_ns - STEP * 10**9
     # Calls are logged when they finish; wait 60 s so a question's calls are all in before pricing it
-    until = now_ns - 60 * 10**9
+    until = now_ns - DELAY
+    # First start: also price the questions of the last two hours
+    since = state["since_ns"] or until - BACKFILL
     info = chat_info()
     with lock:
         for ns, i in info.items():
