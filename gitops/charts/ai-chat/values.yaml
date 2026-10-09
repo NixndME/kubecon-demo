@@ -11,10 +11,13 @@ chatPassword: ""
 
 domain: kubeforge.live
 
-# GPU share for the chat, enforced by HAMi: memory in MiB, compute in percent (0 means no compute limit)
-gpu:
-  memoryMiB: 3072
-  cores: 0
+# Size of the chat: how much GPU memory it gets, enforced by HAMi (MiB).
+# Compute is shared: a chat can use the whole GPU when the others are idle.
+size: small
+sizes:
+  small: 3072
+  medium: 5120
+  large: 8192
 
 ollama:
   image: ollama/ollama:0.40.0

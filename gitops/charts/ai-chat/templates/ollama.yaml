@@ -36,10 +36,7 @@ spec:
           resources:
             limits:
               nvidia.com/gpu: 1
-              nvidia.com/gpumem: {{ .Values.gpu.memoryMiB | quote }}
-              {{- if .Values.gpu.cores }}
-              nvidia.com/gpucores: {{ .Values.gpu.cores | quote }}
-              {{- end }}
+              nvidia.com/gpumem: {{ index .Values.sizes (.Values.size | lower) | required "size must be small, medium or large" | quote }}
           volumeMounts:
             - name: models
               mountPath: /models

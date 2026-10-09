@@ -10,6 +10,7 @@ metadata:
     kubecon-demo/catalog: ai-chat
     kubecon-demo/chat: '<%=app.input.customOptions.aiName%>'
     kubecon-demo/team: '<%=app.input.customOptions.aiTeam%>'
+    kubecon-demo/size: '<%=app.input.customOptions.aiSize%>'
   annotations:
     kubecon-demo/owner: '<%=app.input.customOptions.aiEmail%>'
   # Removing this app also removes everything Argo CD deployed for it
@@ -29,6 +30,8 @@ spec:
           value: '<%=app.input.customOptions.aiTeam%>'
         - name: model
           value: '<%=app.input.customOptions.aiModel%>'
+        - name: size
+          value: '<%=app.input.customOptions.aiSize%>'
         - name: ownerEmail
           value: '<%=app.input.customOptions.aiEmail%>'
         - name: chatPassword

@@ -77,8 +77,13 @@ old=$(api GET "/api/catalog-item-types?max=500" | jq -r '.catalogItemTypes[] | s
 echo "==> Lists"
 models=$(upsert /api/library/option-type-lists optionTypeLists name "AI models" optionTypeList "$(jq -n '{optionTypeList:{
   name:"AI models", type:"manual", description:"Small models that fit a GPU slice",
-  initialDataset:([{name:"Llama 3.2 3B (fast, general)",value:"llama3.2:3b"},{name:"Phi-4 mini 3.8B (MIT license)",value:"phi4-mini:3.8b"}]|tojson)}}')")
-translate='for (var i = 0; i < data.items.length; i++) { var a = data.items[i]; var l = a.metadata.labels || {}; var o = (a.metadata.annotations || {})["kubecon-demo/owner"] || "?"; var p = {}; var ps = (a.spec.source.helm || {}).parameters || []; for (var j = 0; j < ps.length; j++) { p[ps[j].name] = ps[j].value; } var h = (a.status && a.status.health && a.status.health.status) || "?"; results.push({name: a.metadata.name + " (" + o + ", " + p.model + ", " + (h == "Healthy" ? "running" : h == "Progressing" ? "starting or waiting for a GPU slice" : h) + ")", value: a.metadata.name}); }'
+  initialDataset:([{name:"Llama 3.2 3B (fast, general)",value:"llama3.2:3b"},{name:"Phi-4 mini 3.8B (MIT license)",value:"phi4-mini:3.8b"},
+    {name:"Llama 3.1 8B (smarter, needs Large)",value:"llama3.1:8b"}]|tojson)}}')")
+sizes=$(upsert /api/library/option-type-lists optionTypeLists name "AI sizes" optionTypeList "$(jq -n '{optionTypeList:{
+  name:"AI sizes", type:"manual", description:"GPU memory for one chat, enforced by HAMi",
+  initialDataset:([{name:"Small: 3 GB of GPU memory",value:"small"},{name:"Medium: 5 GB of GPU memory, faster",value:"medium"},
+    {name:"Large: 8 GB of GPU memory, for the 8B model",value:"large"}]|tojson)}}')")
+translate='for (var i = 0; i < data.items.length; i++) { var a = data.items[i]; var l = a.metadata.labels || {}; var o = (a.metadata.annotations || {})["kubecon-demo/owner"] || "?"; var p = {}; var ps = (a.spec.source.helm || {}).parameters || []; for (var j = 0; j < ps.length; j++) { p[ps[j].name] = ps[j].value; } var h = (a.status && a.status.health && a.status.health.status) || "?"; results.push({name: a.metadata.name + " (" + o + ", " + p.model + ", " + (p.size || "small") + ", " + (h == "Healthy" ? "running" : h == "Progressing" ? "starting or waiting for a GPU slice" : h) + ")", value: a.metadata.name}); }'
 chats=$(upsert /api/library/option-type-lists optionTypeLists name "AI chats (live)" optionTypeList "$(jq -n \
   --arg url "$ARGOCD/api/v1/applications?selector=kubecon-demo/catalog%3Dai-chat" --arg t "$TOKEN" --arg tr "$translate" '{optionTypeList:{
   name:"AI chats (live)", type:"rest", description:"AI chats running in the cluster now, read from Argo CD",
@@ -100,7 +105,10 @@ in_team=$(upsert /api/library/option-types optionTypes name "AI team" optionType
   verifyPattern:"^([a-z][a-z0-9-]{1,29})?$", placeHolder:"platform", helpBlock:"Optional. Lowercase. Only a label for reports"}}')")
 in_model=$(upsert /api/library/option-types optionTypes name "AI model" optionType "$(jq -n --argjson l "$models" '{optionType:{
   name:"AI model", fieldName:"aiModel", fieldLabel:"Model", type:"select", required:true, displayOrder:5,
-  optionList:{id:$l}, defaultValue:"llama3.2:3b", helpBlock:"Runs on one GPU slice"}}')")
+  optionList:{id:$l}, defaultValue:"llama3.2:3b", helpBlock:"Bigger models are smarter but need a bigger size"}}')")
+in_size=$(upsert /api/library/option-types optionTypes name "AI size" optionType "$(jq -n --argjson l "$sizes" '{optionType:{
+  name:"AI size", fieldName:"aiSize", fieldLabel:"Size", type:"select", required:true, displayOrder:6,
+  optionList:{id:$l}, defaultValue:"small", helpBlock:"How much GPU memory your chat gets. Small fits most people."}}')")
 in_pass=$(upsert /api/library/option-types optionTypes name "AI chat login password" optionType "$(jq -n '{optionType:{
   name:"AI chat login password", fieldName:"aiPassword", fieldLabel:"Password", type:"password", required:true, displayOrder:3,
   verifyPattern:"^[A-Za-z0-9!@#$%^&*()_+=.:;?-]{8,64}$",
@@ -135,7 +143,7 @@ old=$(find_id /api/tasks tasks name "Remove private AI chat"); [ -z "$old" ] || 
 echo "==> Catalog items"
 # Morpheus keeps the order values in app.input, which the blueprint spec reads; it needs both blocks below
 appspec="name: ai-<%=customOptions.aiName%>
-description: 'Chat page https://<%=customOptions.aiName%>.$DOMAIN, login <%=customOptions.aiEmail%>, team <%=customOptions.aiTeam%>, model <%=customOptions.aiModel%>'
+description: 'Chat page https://<%=customOptions.aiName%>.$DOMAIN, login <%=customOptions.aiEmail%>, model <%=customOptions.aiModel%>, size <%=customOptions.aiSize%>'
 group:
   id: $group
 defaultPool:
@@ -146,6 +154,7 @@ customOptions:
   aiTeam: '<%=customOptions.aiTeam%>'
   aiModel: '<%=customOptions.aiModel%>'
   aiPassword: '<%=customOptions.aiPassword%>'
+  aiSize: '<%=customOptions.aiSize%>'
 config:
   customOptions:
     aiName: '<%=customOptions.aiName%>'
@@ -153,13 +162,14 @@ config:
     aiTeam: '<%=customOptions.aiTeam%>'
     aiModel: '<%=customOptions.aiModel%>'
     aiPassword: '<%=customOptions.aiPassword%>'
+    aiSize: '<%=customOptions.aiSize%>'
 "
 c_order=$(upsert /api/catalog-item-types catalogItemTypes name "Private AI chat" catalogItemType "$(jq -n --argjson b "$blueprint" --arg s "$appspec" \
-  --argjson i0 "$in_name" --argjson i1 "$in_email" --argjson i2 "$in_team" --argjson i3 "$in_model" --argjson i4 "$in_pass" --arg d "$DOMAIN" '{catalogItemType:{
-  name:"Private AI chat", type:"blueprint", blueprint:{id:$b}, appSpec:$s, optionTypes:[$i0,$i1,$i4,$i2,$i3],
+  --argjson i0 "$in_name" --argjson i1 "$in_email" --argjson i2 "$in_team" --argjson i3 "$in_model" --argjson i4 "$in_pass" --argjson i5 "$in_size" --arg d "$DOMAIN" '{catalogItemType:{
+  name:"Private AI chat", type:"blueprint", blueprint:{id:$b}, appSpec:$s, optionTypes:[$i0,$i1,$i4,$i2,$i3,$i5],
   enabled:true, featured:true, visibility:"public",
   description:"Your own private AI chat, on a GPU in the HKS cluster.",
-  content:("**What you get**\n\n- A chat page at **https://<first name>." + $d + "**\n- The AI model you pick, on its own GPU slice\n- Your questions stay inside the cluster\n\n**How it works**\n\n1. Fill in the form and order.\n2. An admin approves.\n3. About 2 minutes later, open **Apps > ai-<first name>** for the link. Log in with your email and password.")}}')")
+  content:("**What you get**\n\n- A chat page at **https://<first name>." + $d + "**\n- The AI model you pick, with its own share of the GPU (Small, Medium or Large)\n- Your questions stay inside the cluster\n\n**How it works**\n\n1. Fill in the form and order.\n2. An admin approves.\n3. About 2 minutes later, open **Apps > ai-<first name>** for the link. Log in with your email and password.")}}')")
 c_remove=$(upsert /api/catalog-item-types catalogItemTypes name "Remove AI chat" catalogItemType "$(jq -n --argjson w "$w_remove" --argjson i "$in_chat" --argjson k "$in_confirm" '{catalogItemType:{
   name:"Remove AI chat", type:"workflow", workflow:{id:$w}, context:"appliance", optionTypes:[$i,$k],
   enabled:true, featured:false, visibility:"public",

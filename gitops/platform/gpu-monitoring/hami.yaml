@@ -1,0 +1,60 @@
+# Lets the cluster's Prometheus read HAMi's GPU share metrics: booked and used GPU memory per pod, per GPU totals
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-k8s
+  namespace: hami-system
+rules:
+  - apiGroups: [""]
+    resources: ["services", "endpoints", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-k8s
+  namespace: hami-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-k8s
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-k8s
+    namespace: monitoring
+---
+# What the scheduler booked: GPU memory per pod and per GPU
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hami-scheduler
+  namespace: hami-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: hami-scheduler
+      app.kubernetes.io/instance: hami
+  endpoints:
+    - port: monitor
+      interval: 15s
+      # keep HAMi's own namespace and pod labels (the chat), not hami-system
+      honorLabels: true
+---
+# What each pod really uses on the GPU
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hami-device-plugin
+  namespace: hami-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: hami-device-plugin
+      app.kubernetes.io/instance: hami
+  endpoints:
+    - port: monitorport
+      interval: 15s
+      honorLabels: true

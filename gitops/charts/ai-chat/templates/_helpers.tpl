@@ -10,4 +10,5 @@ kubecon-demo/team: {{ printf "%q" (ternary "" $team (eq $team "null")) }}
 kubecon-demo/requested-by: {{ .Values.requestedBy | quote }}
 kubecon-demo/owner: {{ .Values.ownerEmail | lower | quote }}
 kubecon-demo/model: {{ .Values.model | quote }}
+kubecon-demo/size: {{ .Values.size | lower | quote }}
 {{- end -}}

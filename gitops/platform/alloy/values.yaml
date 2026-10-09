@@ -38,6 +38,10 @@ alloy:
           source_labels = ["__meta_kubernetes_pod_annotation_kubecon_demo_model"]
           target_label  = "model"
         }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_annotation_kubecon_demo_size"]
+          target_label  = "size"
+        }
       }
 
       loki.source.kubernetes "ai" {

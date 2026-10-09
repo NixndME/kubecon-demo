@@ -11,8 +11,8 @@ scheduler:
     type: ClusterIP
 
 devicePlugin:
-  # Up to 6 pods on one GPU; GPU memory decides how many really fit
-  deviceSplitCount: 6
+  # Up to 10 pods on one GPU; GPU memory decides how many really fit
+  deviceSplitCount: 10
   # GPU nodes, as labelled by the GPU Operator (no manual label needed after a rebuild)
   nvidiaNodeSelector:
     gpu: null
