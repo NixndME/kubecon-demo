@@ -1,0 +1,31 @@
+# Storage check: asks for 1 GiB of disk, writes a file and reads it back. Prints "storage ok".
+# kubectl apply -f gitops/tests/storage-test.yaml && kubectl logs -f storage-test
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: storage-test
+  namespace: default
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-test
+  namespace: default
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test
+      image: busybox:1.36
+      command: ["sh", "-c", "echo hello > /data/test.txt && cat /data/test.txt && df -h /data && echo storage ok"]
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: storage-test

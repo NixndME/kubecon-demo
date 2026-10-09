@@ -1,0 +1,12 @@
+# Disk space for apps and AI models, on each node's data disk (mounted at /mnt/hks-data by the cluster layout)
+storageClass:
+  create: true
+  name: local-path
+  defaultClass: true
+  reclaimPolicy: Delete
+  volumeBindingMode: WaitForFirstConsumer
+
+nodePathMap:
+  - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+    paths:
+      - /mnt/hks-data/local-path
