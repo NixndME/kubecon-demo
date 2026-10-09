@@ -1,0 +1,25 @@
+# GPU slicing check: 4 pods each ask for 1 GPU. With 4 slices and the chat app already holding one,
+# 3 run and 1 waits (Pending) until a slice is free.
+# kubectl apply -f gitops/tests/slices-test.yaml && kubectl get pods -l app=gpu-slice-test
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-slice-test
+  namespace: default
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: gpu-slice-test
+  template:
+    metadata:
+      labels:
+        app: gpu-slice-test
+    spec:
+      containers:
+        - name: gpu
+          image: nvcr.io/nvidia/cuda:12.9.1-base-ubuntu24.04
+          command: ["sh", "-c", "nvidia-smi -L && sleep 3600"]
+          resources:
+            limits:
+              nvidia.com/gpu: 1
