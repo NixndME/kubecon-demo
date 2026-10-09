@@ -819,7 +819,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum by (namespace, owner, model, team, size) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=~\".+\"} [15m]))",
+          "expr": "sum by (namespace, owner, model, team, size) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=~\".+\"} [2m]))",
           "refId": "E",
           "queryType": "instant",
           "legendFormat": ""
@@ -853,7 +853,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum by (namespace) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=\"webui\"} |= \"audit:write\" |= \"/api/chat/completions\" != \"\\\"user\\\": {}\" [$__range]))",
+          "expr": "sum by (namespace) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=\"webui\"} |= \"audit:write\" |= \"/api/chat/completions\" != \"\\\"user\\\": {}\" [$__range])) and on (namespace) sum by (namespace) (count_over_time({namespace=~\"ai-.+\", namespace!=\"ai-chat\", container=~\".+\"} [2m]))",
           "refId": "F",
           "queryType": "instant",
           "legendFormat": ""
@@ -965,9 +965,33 @@
               "type": "auto"
             }
           },
-          "noValue": "-"
+          "noValue": "No chats running. Order one from the Morpheus Service Catalog."
         },
         "overrides": [
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "string"
+            },
+            "properties": [
+              {
+                "id": "noValue",
+                "value": "-"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "number"
+            },
+            "properties": [
+              {
+                "id": "noValue",
+                "value": "-"
+              }
+            ]
+          },
           {
             "matcher": {
               "id": "byName",
