@@ -1,0 +1,100 @@
+# Chat mailer: mails the owner of an AI chat when it is ready. The SES key comes from scripts/setup-email.sh.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chat-mailer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: chat-mailer
+  namespace: chat-mailer
+---
+# Read the Argo CD apps of the chats, nothing else
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: chat-mailer
+  namespace: argocd
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: chat-mailer
+  namespace: argocd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: chat-mailer
+subjects:
+  - kind: ServiceAccount
+    name: chat-mailer
+    namespace: chat-mailer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: state
+  namespace: chat-mailer
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-mailer
+  namespace: chat-mailer
+  labels:
+    app: chat-mailer
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chat-mailer
+  template:
+    metadata:
+      labels:
+        app: chat-mailer
+    spec:
+      serviceAccountName: chat-mailer
+      containers:
+        - name: chat-mailer
+          image: python:3.13-alpine
+          command: ["python", "-u", "/app/mailer.py"]
+          env:
+            - name: DOMAIN
+              value: kubeforge.live
+            - name: REGION
+              value: us-west-2
+          envFrom:
+            - secretRef:
+                name: ses
+                optional: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: app
+              mountPath: /app
+            - name: state
+              mountPath: /data
+      volumes:
+        - name: app
+          configMap:
+            name: chat-mailer-app
+        - name: state
+          persistentVolumeClaim:
+            claimName: state

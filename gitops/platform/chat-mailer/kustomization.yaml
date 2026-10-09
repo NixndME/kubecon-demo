@@ -1,0 +1,10 @@
+resources:
+  - resources.yaml
+generatorOptions:
+  # a new name on every change restarts the mailer with the new code
+  disableNameSuffixHash: false
+configMapGenerator:
+  - name: chat-mailer-app
+    namespace: chat-mailer
+    files:
+      - mailer.py

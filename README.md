@@ -17,6 +17,7 @@ No passwords, keys or Terraform state are in this repo. They stay on the machine
 | `terraform/network` | VPC, subnets, internet gateway, security group, SSH key, Morpheus IP and name |
 | `terraform/morpheus` | The Morpheus VM |
 | `terraform/hks` | The HKS nodes: one master and one GPU worker |
+| `terraform/email` | Amazon SES for mail from noreply@<domain>, its DNS records and a send-only user |
 | `scripts` | Install Morpheus, NVIDIA driver and API name steps for the cluster layout, Argo CD bootstrap, Morpheus catalog setup |
 | `gitops` | What Argo CD runs: cert-manager, Traefik, Argo CD, GPU Operator, storage, Loki, Grafana, the AI chat chart |
 | `morpheus` | Files the catalog setup loads into Morpheus: blueprint specs, the remove task, catalog logos |
@@ -35,7 +36,9 @@ No passwords, keys or Terraform state are in this repo. They stay on the machine
 5. Argo CD then follows `gitops/root-app.yaml`: every file in `gitops/apps` is an app it keeps in sync with Git.
 6. `scripts/setup-morpheus-catalog.sh` sets up the Morpheus side: the "Private AI chat" blueprint and catalog
    item, the "Remove AI chat" item, the developer role and user, and the approvals. It is safe to run again.
-7. `scripts/setup-morpheus-dashboard.sh` installs the "AI on HKS" dashboard on Operations > Dashboard, with
+7. `scripts/setup-email.sh` lets Morpheus and the chat mailer send mail. When a chat is ready, its owner gets the
+   link and the username by mail.
+8. `scripts/setup-morpheus-dashboard.sh` installs the "AI on HKS" dashboard on Operations > Dashboard, with
    Approve and Reject buttons for waiting orders.
 
 ## The AI chat, step by step
@@ -95,6 +98,13 @@ When all Argo CD apps are healthy, set up the Morpheus catalog:
 scripts/setup-morpheus-catalog.sh <file with MORPHEUS_URL and MORPHEUS_TOKEN> <file with APPS_USER and APPS_PASSWORD>
 ```
 
+Then email (add the addresses that should get mail):
+
+```bash
+scripts/tf.sh email init && scripts/tf.sh email plan && scripts/tf.sh email apply
+KUBECONFIG=<kubeconfig> scripts/setup-email.sh <file with MORPHEUS_URL and MORPHEUS_TOKEN> [address ...]
+```
+
 Then the dashboard (jar from the releases page, or `morpheus-dashboard-plugin/build.sh`):
 
 ```bash
@@ -111,3 +121,5 @@ KUBECONFIG=<kubeconfig> scripts/setup-morpheus-dashboard.sh <file with MORPHEUS_
   allows no backslashes, so the chart removes them and the login is exactly what was typed.
 - The chat password is kept in the Argo CD app, so Argo CD admins can read it. Use a demo password.
 - Deleting an app in Morpheus does not remove what it made in the cluster. Use "Remove AI chat".
+- SES stays in test mode: it only mails addresses that clicked the confirm mail from Amazon, up to 200 a day.
+  The chat mailer asks Amazon for that confirm mail the first time an address orders, then waits for the click.
