@@ -35,7 +35,7 @@ GPU_GB_H = GPU_H / gpu_mem_gb
 
 lock = Lock()
 # Bump when the way questions are priced changes: the recorder then starts fresh
-STATE_VERSION = 6
+STATE_VERSION = 7
 state = {"version": STATE_VERSION, "since_ns": 0, "chats": {}}
 
 
@@ -141,7 +141,7 @@ def record(ns, q, calls, info, asked_ns):
 
 
 DELAY = 60 * 10**9
-BACKFILL = int(os.environ.get("BACKFILL_MINUTES", "120")) * 60 * 10**9
+BACKFILL = int(os.environ.get("BACKFILL_MINUTES", "360")) * 60 * 10**9
 
 
 def backfill(seconds):
@@ -169,7 +169,7 @@ def step():
     now_ns = time.time_ns()
     # Calls are logged when they finish; wait 60 s so a question's calls are all in before pricing it
     until = now_ns - DELAY
-    # First start: also price the questions of the last two hours
+    # First start: also price the questions of the last six hours
     since = state["since_ns"] or until - BACKFILL
     info = chat_info()
     with lock:
