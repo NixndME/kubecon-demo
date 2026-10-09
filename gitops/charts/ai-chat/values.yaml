@@ -14,6 +14,11 @@ domain: kubeforge.live
 # Size of the chat: how much GPU memory it gets, enforced by HAMi (MiB).
 # Compute is shared: a chat can use the whole GPU when the others are idle.
 size: small
+
+# Chat with your documents: people upload files and ask about them. The files are indexed by a small
+# embedding model on the same Ollama, so nothing leaves the cluster.
+documents: false
+embedModel: nomic-embed-text
 sizes:
   small: 3072
   medium: 5120

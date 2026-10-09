@@ -129,13 +129,21 @@ blueprint=$(upsert /api/blueprints blueprints name "Private AI chat" blueprint "
   name:"Private AI chat", type:"kubernetes", visibility:"public", description:"One private AI chat, deployed by Argo CD",
   config:{specs:[{id:$s}]}, kubernetes:{configType:"spec", specs:[{id:$s}]}}')")
 [ -n "$blueprint" ] && [ "$blueprint" != null ] || blueprint=$(find_id /api/blueprints blueprints name "Private AI chat")
+# Chat with your documents: same chart with documents on, named ai-<first name>-docs
+docs_spec=$(upsert /api/library/spec-templates specTemplates name "AI documents chat (Argo CD app)" specTemplate "$(jq -n \
+  --rawfile y "$HERE/../morpheus/ai-docs-app.yaml" --arg repo "$REPO_URL" '{specTemplate:{
+  name:"AI documents chat (Argo CD app)", type:{code:"kubernetes"}, file:{sourceType:"local", content:($y | gsub("__REPO_URL__"; $repo))}}}')")
+docs_blueprint=$(upsert /api/blueprints blueprints name "Chat with your documents" blueprint "$(jq -n --argjson s "$docs_spec" '{
+  name:"Chat with your documents", type:"kubernetes", visibility:"public", description:"A private AI chat that answers from your files, deployed by Argo CD",
+  config:{specs:[{id:$s}]}, kubernetes:{configType:"spec", specs:[{id:$s}]}}')")
+[ -n "$docs_blueprint" ] && [ "$docs_blueprint" != null ] || docs_blueprint=$(find_id /api/blueprints blueprints name "Chat with your documents")
 
 echo "==> Remove task and workflow"
 groovy=$(sed -e "s|__ARGOCD_URL__|$ARGOCD|g" -e "s|__ARGOCD_TOKEN__|$TOKEN|g" -e "s|__MORPHEUS_URL__|$M|g" -e "s|__MORPHEUS_TOKEN__|$MORPHEUS_TOKEN|g" "$HERE/../morpheus/remove-ai-chat.groovy")
 t_remove=$(upsert /api/tasks tasks name "Remove AI chat (check and delete)" task "$(jq -n --arg g "$groovy" '{task:{
   name:"Remove AI chat (check and delete)", taskType:{code:"groovyTask"}, executeTarget:"local", file:{sourceType:"local", content:$g}}}')")
 w_remove=$(upsert /api/task-sets taskSets name "Remove AI chat" taskSet "$(jq -n --argjson a "$t_remove" --argjson i "$in_chat" --argjson k "$in_confirm" '{taskSet:{
-  name:"Remove AI chat", type:"operation", description:"Removes an AI chat and frees its GPU slice",
+  name:"Remove AI chat", type:"operation", description:"Removes an AI chat and frees its GPU memory",
   tasks:[{taskId:$a, taskPhase:"operation"}], optionTypes:[$i,$k]}}')")
 # The HTTP remove task of an older version, no longer used by the workflow
 old=$(find_id /api/tasks tasks name "Remove private AI chat"); [ -z "$old" ] || api DELETE "/api/tasks/$old" >/dev/null || echo "    could not remove the old remove task"
@@ -170,14 +178,23 @@ c_order=$(upsert /api/catalog-item-types catalogItemTypes name "Private AI chat"
   enabled:true, featured:true, visibility:"public",
   description:"Your own private AI chat, on a GPU in the HKS cluster.",
   content:("**What you get**\n\n- A chat page at **https://<first name>." + $d + "**\n- The AI model you pick, with its own share of the GPU (Small, Medium or Large)\n- Your questions stay inside the cluster\n\n**How it works**\n\n1. Fill in the form and order.\n2. An admin approves.\n3. About 2 minutes later, open **Apps > ai-<first name>** for the link. Log in with your email and password.")}}')")
+# Same order values, other name and page
+docs_appspec=$(printf '%s' "$appspec" | sed -e '1s/$/-docs/' \
+  -e "2s|description: 'Chat page https://<%=customOptions.aiName%>.|description: 'Documents chat https://<%=customOptions.aiName%>-docs.|")
+c_docs=$(upsert /api/catalog-item-types catalogItemTypes name "Chat with your documents" catalogItemType "$(jq -n --argjson b "$docs_blueprint" --arg s "$docs_appspec" \
+  --argjson i0 "$in_name" --argjson i1 "$in_email" --argjson i2 "$in_team" --argjson i3 "$in_model" --argjson i4 "$in_pass" --argjson i5 "$in_size" --arg d "$DOMAIN" '{catalogItemType:{
+  name:"Chat with your documents", type:"blueprint", blueprint:{id:$b}, appSpec:$s, optionTypes:[$i0,$i1,$i4,$i2,$i3,$i5],
+  enabled:true, featured:true, visibility:"public",
+  description:"Upload your files and ask questions about them. Private, on a GPU in the HKS cluster.",
+  content:("**What you get**\n\n- A chat page at **https://<first name>-docs." + $d + "**\n- Upload PDFs, Word files or text, then ask questions. Answers come from your files.\n- Your files never leave the cluster\n\n**How it works**\n\n1. Fill in the form and order. Medium size is best for documents.\n2. An admin approves.\n3. About 3 minutes later, open **Apps > ai-<first name>-docs** for the link. Log in with your email and password.\n4. In the chat box, click **+**, add a file, and ask about it.")}}')")
 c_remove=$(upsert /api/catalog-item-types catalogItemTypes name "Remove AI chat" catalogItemType "$(jq -n --argjson w "$w_remove" --argjson i "$in_chat" --argjson k "$in_confirm" '{catalogItemType:{
   name:"Remove AI chat", type:"workflow", workflow:{id:$w}, context:"appliance", optionTypes:[$i,$k],
   enabled:true, featured:false, visibility:"public",
   description:"Remove an AI chat you no longer need.",
-  content:"**What happens**\n\n- The chat page, its model and its GPU slice are removed.\n- The chat history is deleted.\n\n**How**\n\nPick the chat, type its name (for example ai-jane) to confirm, and order."}}')")
+  content:"**What happens**\n\n- The chat page and its model are removed, and its GPU memory is free again.\n- The chat history and uploaded files are deleted.\n\n**How**\n\nPick the chat, type its name (for example ai-jane or ai-jane-docs) to confirm, and order."}}')")
 
 echo "==> Logos"
-for c in "$c_order:ai-chat.svg" "$c_remove:remove-ai-chat.svg"; do
+for c in "$c_order:ai-chat.svg" "$c_docs:ai-docs.svg" "$c_remove:remove-ai-chat.svg"; do
   curl -sf -X PUT -H "Authorization: Bearer $MORPHEUS_TOKEN" -F "catalogItemType.logo=@$HERE/../morpheus/logos/${c#*:};type=image/svg+xml" \
     "$M/api/catalog-item-types/${c%%:*}/update-logo" >/dev/null || echo "    could not upload the logo ${c#*:}"
 done
@@ -189,8 +206,10 @@ api PUT "/api/roles/$role/update-persona" '{"personaCode":"serviceCatalog","acce
 api PUT "/api/roles/$role/update-persona" '{"personaCode":"standard","access":"none"}' >/dev/null
 api PUT "/api/roles/$role/update-group" "{\"groupId\":$group,\"access\":\"full\"}" >/dev/null || true
 api PUT "/api/roles/$role/update-group" '{"groupId":1,"access":"none"}' >/dev/null || true
-api PUT "/api/roles/$role/update-blueprint" "{\"blueprintId\":$blueprint,\"access\":\"full\"}" >/dev/null || echo "    could not give blueprint access"
-for c in "$c_order" "$c_remove"; do api PUT "/api/roles/$role/update-catalog-item-type" "{\"catalogItemTypeId\":$c,\"access\":\"full\"}" >/dev/null; done
+for b in "$blueprint" "$docs_blueprint"; do
+  api PUT "/api/roles/$role/update-blueprint" "{\"blueprintId\":$b,\"access\":\"full\"}" >/dev/null || echo "    could not give blueprint access"
+done
+for c in "$c_order" "$c_docs" "$c_remove"; do api PUT "/api/roles/$role/update-catalog-item-type" "{\"catalogItemTypeId\":$c,\"access\":\"full\"}" >/dev/null; done
 for p in service-catalog:full service-catalog-dashboard:read service-catalog-inventory:full provisioning-execute-workflow:full executions:read apps:full services-cypher:none; do
   api PUT "/api/roles/$role/update-permission" "{\"permissionCode\":\"${p%%:*}\",\"access\":\"${p#*:}\"}" >/dev/null || echo "    could not set ${p%%:*}"
 done
@@ -222,5 +241,5 @@ for t in $(curl -sf -H "Authorization: Bearer $admin" "$ARGOCD/api/v1/account/mo
   curl -sf -X DELETE -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' "$ARGOCD/api/v1/account/morpheus/token/$t" >/dev/null || true
 done
 
-echo "Done. Blueprint $blueprint, catalog items $c_order and $c_remove, role $role${DEV_USER:+, user $DEV_USER ($user)}."
+echo "Done. Blueprints $blueprint and $docs_blueprint, catalog items $c_order, $c_docs and $c_remove, role $role${DEV_USER:+, user $DEV_USER ($user)}."
 echo "The developer switches to the catalog at $M/user-settings/switch-persona/serviceCatalog"

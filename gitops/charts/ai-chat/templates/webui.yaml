@@ -8,7 +8,7 @@ spec:
   accessModes: ["ReadWriteOnce"]
   resources:
     requests:
-      storage: {{ .Values.webui.storage }}
+      storage: {{ ternary "5Gi" .Values.webui.storage .Values.documents }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -36,7 +36,7 @@ spec:
             - name: OLLAMA_BASE_URL
               value: http://ollama:11434
             - name: WEBUI_NAME
-              value: {{ printf "%s AI" (.Values.name | title) | quote }}
+              value: {{ printf "%s AI%s" (.Values.name | trimSuffix "-docs" | title) (ternary " documents" "" .Values.documents) | quote }}
             - name: ENABLE_SIGNUP
               value: "false"
             - name: ENABLE_OPENAI_API
@@ -45,6 +45,17 @@ spec:
               value: "false"
             - name: DEFAULT_MODELS
               value: {{ .Values.model | quote }}
+            {{- if .Values.documents }}
+            # Index uploaded files with the embedding model on the chat's own Ollama (no download from the internet)
+            - name: RAG_EMBEDDING_ENGINE
+              value: ollama
+            - name: RAG_EMBEDDING_MODEL
+              value: {{ .Values.embedModel | quote }}
+            - name: RAG_EMBEDDING_MODEL_AUTO_UPDATE
+              value: "false"
+            - name: RAG_TOP_K
+              value: "5"
+            {{- end }}
             # Log each chat request (who asked what) to the pod log, for the Grafana dashboard
             - name: AUDIT_LOG_LEVEL
               value: REQUEST
