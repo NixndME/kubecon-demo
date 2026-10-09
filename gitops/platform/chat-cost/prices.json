@@ -1,0 +1,14 @@
+{
+  "source": "AWS on-demand list prices, Linux, us-west-2, read with the AWS Pricing API on 2026-10-09",
+  "gpu_node": "g4dn.2xlarge",
+  "gpu_node_per_hour": 0.752,
+  "same_node_without_gpu": "m6a.2xlarge",
+  "same_node_without_gpu_per_hour": 0.3456,
+  "vcpus": 8,
+  "memory_gb": 32,
+  "gpu_memory_gb": 15,
+  "vcpu_to_memory_gb_ratio": 7.46,
+  "platform_per_hour": 0.1193,
+  "platform": "HKS master m6a.large 0.0864 plus 300 GB gp3 disks at 0.08 per GB-month",
+  "sizes_gb": {"small": 3, "medium": 4, "large": 8}
+}

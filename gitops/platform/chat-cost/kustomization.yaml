@@ -1,0 +1,14 @@
+resources:
+  - resources.yaml
+generatorOptions:
+  # a new name on every change restarts the recorder with the new code or prices
+  disableNameSuffixHash: false
+configMapGenerator:
+  - name: chat-cost-app
+    namespace: chat-cost
+    files:
+      - cost.py
+  - name: chat-cost-prices
+    namespace: chat-cost
+    files:
+      - prices.json

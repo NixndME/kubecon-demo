@@ -1,0 +1,128 @@
+# Cost recorder for the AI chats: prices every question and every chat with the AWS prices in prices.json
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chat-cost
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: state
+  namespace: chat-cost
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-cost
+  namespace: chat-cost
+  labels:
+    app: chat-cost
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chat-cost
+  template:
+    metadata:
+      labels:
+        app: chat-cost
+    spec:
+      containers:
+        - name: chat-cost
+          image: python:3.13-alpine
+          command: ["python", "-u", "/app/cost.py"]
+          ports:
+            - name: metrics
+              containerPort: 9100
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9100
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: app
+              mountPath: /app
+            - name: config
+              mountPath: /config
+            - name: state
+              mountPath: /data
+      volumes:
+        - name: app
+          configMap:
+            name: chat-cost-app
+        - name: config
+          configMap:
+            name: chat-cost-prices
+        - name: state
+          persistentVolumeClaim:
+            claimName: state
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-cost
+  namespace: chat-cost
+  labels:
+    app: chat-cost
+spec:
+  selector:
+    app: chat-cost
+  ports:
+    - name: metrics
+      port: 9100
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: chat-cost
+  namespace: chat-cost
+spec:
+  selector:
+    matchLabels:
+      app: chat-cost
+  endpoints:
+    - port: metrics
+      interval: 30s
+      # keep the chat's own labels as they are
+      honorLabels: true
+---
+# Lets the cluster's Prometheus read the cost recorder
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-k8s
+  namespace: chat-cost
+rules:
+  - apiGroups: [""]
+    resources: ["services", "endpoints", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-k8s
+  namespace: chat-cost
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-k8s
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-k8s
+    namespace: monitoring
