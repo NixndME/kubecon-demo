@@ -43,28 +43,12 @@
   "panels": [
     {
       "id": 1,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 24,
-        "h": 2
-      },
-      "transparent": true,
-      "options": {
-        "mode": "markdown",
-        "content": "### Private AI chats on HKS\nEach chat is ordered from the Morpheus catalog and deployed by Argo CD. It gets its own share of GPU memory (Small 3 GB, Medium 4 GB, Large 8 GB), enforced by HAMi. Numbers follow the time range at the top right."
-      }
-    },
-    {
-      "id": 2,
       "type": "stat",
       "title": "Chats running",
       "description": "Chats with all pods ready now.",
       "gridPos": {
         "x": 0,
-        "y": 2,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -120,13 +104,13 @@
       "transparent": true
     },
     {
-      "id": 3,
+      "id": 2,
       "type": "stat",
       "title": "Starting or waiting",
       "description": "Chats that are starting, or waiting until enough GPU memory is free.",
       "gridPos": {
         "x": 4,
-        "y": 2,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -186,13 +170,13 @@
       "transparent": true
     },
     {
-      "id": 4,
+      "id": 3,
       "type": "stat",
       "title": "GPU memory booked",
-      "description": "GPU memory promised to running chats, out of all GPU memory. A new chat waits when there is not enough left.",
+      "description": "Booked by running chats, out of all GPU memory.",
       "gridPos": {
         "x": 8,
-        "y": 2,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -256,13 +240,13 @@
       "transparent": true
     },
     {
-      "id": 5,
+      "id": 4,
       "type": "stat",
       "title": "Chats ordered",
       "description": "Orders in this time range.",
       "gridPos": {
         "x": 12,
-        "y": 2,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -317,13 +301,13 @@
       "transparent": true
     },
     {
-      "id": 6,
+      "id": 5,
       "type": "stat",
       "title": "Chats removed",
       "description": "Removals in this time range.",
       "gridPos": {
         "x": 16,
-        "y": 2,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -378,13 +362,13 @@
       "transparent": true
     },
     {
-      "id": 7,
+      "id": 6,
       "type": "stat",
       "title": "Questions asked",
-      "description": "Chat questions in this time range, all chats.",
+      "description": "Who asked what, newest first.",
       "gridPos": {
         "x": 20,
-        "y": 2,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -439,26 +423,26 @@
       "transparent": true
     },
     {
-      "id": 8,
+      "id": 7,
       "type": "row",
       "title": "Activity: what was ordered, started and removed",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 6,
+        "y": 4,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 9,
+      "id": 8,
       "type": "timeseries",
       "title": "Orders and removals",
-      "description": "Chats ordered and removed, per 10 minutes (longer on long time ranges).",
+      "description": "Per 10 minutes.",
       "gridPos": {
         "x": 0,
-        "y": 7,
+        "y": 5,
         "w": 9,
         "h": 9
       },
@@ -579,13 +563,13 @@
       "transparent": true
     },
     {
-      "id": 10,
+      "id": 9,
       "type": "table",
       "title": "Activity log",
-      "description": "Every order, start, removal and problem, newest first. Kept for 7 days.",
+      "description": "Kept for 7 days.",
       "gridPos": {
         "x": 9,
-        "y": 7,
+        "y": 5,
         "w": 15,
         "h": 9
       },
@@ -742,26 +726,26 @@
       "transparent": true
     },
     {
-      "id": 11,
+      "id": 10,
       "type": "row",
       "title": "Running chats",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 14,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 12,
+      "id": 11,
       "type": "table",
       "title": "Chats in the cluster now",
-      "description": "One row per chat. GPU memory booked is its share; used is what its model takes now (an idle model is unloaded after 5 minutes). Click the page to open the chat.",
+      "description": "Click the page to open a chat.",
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 15,
         "w": 24,
         "h": 7
       },
@@ -1375,26 +1359,26 @@
       "transparent": true
     },
     {
-      "id": 13,
+      "id": 12,
       "type": "row",
       "title": "GPU: one NVIDIA T4 (15 GB), shared by HAMi",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 24,
+        "y": 22,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 14,
+      "id": 13,
       "type": "gauge",
       "title": "GPU busy",
       "description": "How busy the GPU is, all chats together. Orange at 70, red at 90.",
       "gridPos": {
         "x": 0,
-        "y": 25,
+        "y": 23,
         "w": 4,
         "h": 7
       },
@@ -1453,13 +1437,13 @@
       "transparent": true
     },
     {
-      "id": 15,
+      "id": 14,
       "type": "gauge",
       "title": "GPU memory in use",
-      "description": "Memory the loaded models really use, all chats together. Orange at 70, red at 90.",
+      "description": "All chats together. Orange at 70, red at 90.",
       "gridPos": {
         "x": 4,
-        "y": 25,
+        "y": 23,
         "w": 4,
         "h": 7
       },
@@ -1518,13 +1502,13 @@
       "transparent": true
     },
     {
-      "id": 16,
+      "id": 15,
       "type": "barchart",
       "title": "GPU memory per chat: booked and used",
-      "description": "Booked is the share HAMi keeps for the chat (its size). Used is what its model takes now.",
+      "description": "Booked: its size. Used: what its model takes now.",
       "gridPos": {
         "x": 8,
-        "y": 25,
+        "y": 23,
         "w": 6,
         "h": 7
       },
@@ -1641,13 +1625,13 @@
       "transparent": true
     },
     {
-      "id": 17,
+      "id": 16,
       "type": "timeseries",
       "title": "GPU over time",
       "description": "GPU busy and GPU memory in percent.",
       "gridPos": {
         "x": 14,
-        "y": 25,
+        "y": 23,
         "w": 6,
         "h": 7
       },
@@ -1740,13 +1724,13 @@
       "transparent": true
     },
     {
-      "id": 18,
+      "id": 17,
       "type": "stat",
       "title": "Temperature",
       "description": "GPU temperature. Orange at 75, red at 85.",
       "gridPos": {
         "x": 20,
-        "y": 25,
+        "y": 23,
         "w": 4,
         "h": 3
       },
@@ -1810,13 +1794,13 @@
       "transparent": true
     },
     {
-      "id": 19,
+      "id": 18,
       "type": "stat",
       "title": "Power",
       "description": "GPU power draw. The T4 limit is 70 W.",
       "gridPos": {
         "x": 20,
-        "y": 28,
+        "y": 26,
         "w": 4,
         "h": 4
       },
@@ -1880,26 +1864,26 @@
       "transparent": true
     },
     {
-      "id": 20,
+      "id": 19,
       "type": "row",
       "title": "Questions",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 32,
+        "y": 30,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 21,
+      "id": 20,
       "type": "table",
       "title": "Questions asked",
-      "description": "Who asked what, with which model. Newest first. Click a column title to sort, or the funnel to filter.",
+      "description": "Who asked what, newest first.",
       "gridPos": {
         "x": 0,
-        "y": 33,
+        "y": 31,
         "w": 24,
         "h": 9
       },
@@ -2026,26 +2010,26 @@
       "transparent": true
     },
     {
-      "id": 22,
+      "id": 21,
       "type": "row",
       "title": "Chat details: $chat",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 42,
+        "y": 40,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 23,
+      "id": 22,
       "type": "stat",
       "title": "Pods ready",
       "description": "Model server and chat page. 2 of 2 means it is up.",
       "gridPos": {
         "x": 0,
-        "y": 43,
+        "y": 41,
         "w": 4,
         "h": 4
       },
@@ -2120,13 +2104,13 @@
       "transparent": true
     },
     {
-      "id": 24,
+      "id": 23,
       "type": "stat",
       "title": "GPU memory booked",
-      "description": "Its share of GPU memory. 0 means it is waiting for GPU memory.",
+      "description": "Booked by running chats, out of all GPU memory.",
       "gridPos": {
         "x": 4,
-        "y": 43,
+        "y": 41,
         "w": 4,
         "h": 4
       },
@@ -2186,13 +2170,13 @@
       "transparent": true
     },
     {
-      "id": 25,
+      "id": 24,
       "type": "stat",
       "title": "Questions",
       "description": "Questions to this chat in the time range.",
       "gridPos": {
         "x": 8,
-        "y": 43,
+        "y": 41,
         "w": 4,
         "h": 4
       },
@@ -2247,13 +2231,13 @@
       "transparent": true
     },
     {
-      "id": 26,
+      "id": 25,
       "type": "stat",
       "title": "Restarts",
       "description": "Container restarts. More than 0 can mean a problem.",
       "gridPos": {
         "x": 12,
-        "y": 43,
+        "y": 41,
         "w": 4,
         "h": 4
       },
@@ -2317,13 +2301,13 @@
       "transparent": true
     },
     {
-      "id": 27,
+      "id": 26,
       "type": "stat",
       "title": "Memory",
       "description": "Memory used by the chat now.",
       "gridPos": {
         "x": 16,
-        "y": 43,
+        "y": 41,
         "w": 4,
         "h": 4
       },
@@ -2387,13 +2371,13 @@
       "transparent": true
     },
     {
-      "id": 28,
+      "id": 27,
       "type": "stat",
       "title": "Age",
       "description": "Time since the chat was created.",
       "gridPos": {
         "x": 20,
-        "y": 43,
+        "y": 41,
         "w": 4,
         "h": 4
       },
@@ -2449,13 +2433,13 @@
       "transparent": true
     },
     {
-      "id": 29,
+      "id": 28,
       "type": "gauge",
       "title": "CPU of its node",
       "description": "Share of the node CPU this chat uses. Orange at 70, red at 90.",
       "gridPos": {
         "x": 0,
-        "y": 47,
+        "y": 45,
         "w": 4,
         "h": 7
       },
@@ -2514,13 +2498,13 @@
       "transparent": true
     },
     {
-      "id": 30,
+      "id": 29,
       "type": "gauge",
       "title": "Memory of its node",
       "description": "Share of the node memory this chat uses. Orange at 70, red at 90.",
       "gridPos": {
         "x": 4,
-        "y": 47,
+        "y": 45,
         "w": 4,
         "h": 7
       },
@@ -2579,13 +2563,13 @@
       "transparent": true
     },
     {
-      "id": 31,
+      "id": 30,
       "type": "timeseries",
       "title": "GPU memory",
       "description": "Booked share and what the model really uses.",
       "gridPos": {
         "x": 8,
-        "y": 47,
+        "y": 45,
         "w": 5,
         "h": 7
       },
@@ -2678,13 +2662,13 @@
       "transparent": true
     },
     {
-      "id": 32,
+      "id": 31,
       "type": "timeseries",
       "title": "CPU (cores)",
       "description": "By part: ollama is the model server, webui is the chat page.",
       "gridPos": {
         "x": 13,
-        "y": 47,
+        "y": 45,
         "w": 5,
         "h": 7
       },
@@ -2766,13 +2750,13 @@
       "transparent": true
     },
     {
-      "id": 33,
+      "id": 32,
       "type": "timeseries",
       "title": "Memory",
       "description": "By part: ollama is the model server, webui is the chat page.",
       "gridPos": {
         "x": 18,
-        "y": 47,
+        "y": 45,
         "w": 6,
         "h": 7
       },
@@ -2854,13 +2838,13 @@
       "transparent": true
     },
     {
-      "id": 34,
+      "id": 33,
       "type": "logs",
       "title": "Logs of $chat",
       "description": "Newest first. Health checks are hidden.",
       "gridPos": {
         "x": 0,
-        "y": 54,
+        "y": 52,
         "w": 24,
         "h": 10
       },

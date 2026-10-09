@@ -22,28 +22,12 @@
   "panels": [
     {
       "id": 1,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 24,
-        "h": 3
-      },
-      "options": {
-        "mode": "markdown",
-        "content": "### What the AI chats cost\nEvery chat pays for its share of GPU memory all the time, plus the CPU and memory it uses. A question costs the seconds it keeps the model busy. **Questions + idle = total** for every chat. Prices are AWS on-demand list prices for the GPU node (g4dn.2xlarge, us-west-2), split into GPU, CPU and memory. Numbers follow the time range at the top right."
-      },
-      "transparent": true
-    },
-    {
-      "id": 2,
       "type": "stat",
       "title": "Total cost",
       "description": "What all chats cost in this time range: questions plus idle.",
       "gridPos": {
         "x": 0,
-        "y": 3,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -98,13 +82,13 @@
       "transparent": true
     },
     {
-      "id": 3,
+      "id": 2,
       "type": "stat",
       "title": "Questions",
-      "description": "What the questions cost: the seconds each one kept the model busy, plus CPU and memory.",
+      "description": "GPU, CPU and memory used by questions.",
       "gridPos": {
         "x": 4,
-        "y": 3,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -159,13 +143,13 @@
       "transparent": true
     },
     {
-      "id": 4,
+      "id": 3,
       "type": "stat",
       "title": "Idle",
-      "description": "What the chats cost while nobody asked anything: GPU memory kept for them.",
+      "description": "Cost while nobody asked anything.",
       "gridPos": {
         "x": 8,
-        "y": 3,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -220,13 +204,13 @@
       "transparent": true
     },
     {
-      "id": 5,
+      "id": 4,
       "type": "stat",
       "title": "Questions asked",
       "description": "Questions priced in this time range.",
       "gridPos": {
         "x": 12,
-        "y": 3,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -281,13 +265,13 @@
       "transparent": true
     },
     {
-      "id": 6,
+      "id": 5,
       "type": "stat",
       "title": "Cost per question",
       "description": "Average cost of one question.",
       "gridPos": {
         "x": 16,
-        "y": 3,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -342,13 +326,13 @@
       "transparent": true
     },
     {
-      "id": 7,
+      "id": 6,
       "type": "stat",
       "title": "GPU machine cost",
       "description": "What the whole GPU node cost in this time range, used or not.",
       "gridPos": {
         "x": 20,
-        "y": 3,
+        "y": 0,
         "w": 4,
         "h": 4
       },
@@ -403,26 +387,26 @@
       "transparent": true
     },
     {
-      "id": 8,
+      "id": 7,
       "type": "row",
       "title": "Cost per chat: who uses what",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 7,
+        "y": 4,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 9,
+      "id": 8,
       "type": "table",
       "title": "Cost per chat",
-      "description": "Questions + idle = total. Usage is how much of its running time the chat was busy answering. CPU per GPU second above 2.5 means the model does not fit its size and runs partly on the CPU.",
+      "description": "Questions + idle = total. CPU per GPU s above 2.5: model too big for its size.",
       "gridPos": {
         "x": 0,
-        "y": 8,
+        "y": 5,
         "w": 24,
         "h": 8
       },
@@ -976,13 +960,13 @@
       "transparent": true
     },
     {
-      "id": 10,
+      "id": 9,
       "type": "barchart",
       "title": "Questions and idle per chat",
-      "description": "Each bar is one chat's total cost. Green is what its questions cost, orange is idle.",
+      "description": "Green: questions. Orange: idle.",
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 13,
         "w": 12,
         "h": 8
       },
@@ -1104,13 +1088,13 @@
       "transparent": true
     },
     {
-      "id": 11,
+      "id": 10,
       "type": "barchart",
       "title": "Cost by part per chat",
       "description": "GPU memory kept for the chat, CPU and memory used.",
       "gridPos": {
         "x": 12,
-        "y": 16,
+        "y": 13,
         "w": 12,
         "h": 8
       },
@@ -1260,26 +1244,26 @@
       "transparent": true
     },
     {
-      "id": 12,
+      "id": 11,
       "type": "row",
       "title": "Every question",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 24,
+        "y": 21,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 13,
+      "id": 12,
       "type": "table",
       "title": "Most expensive questions",
-      "description": "The questions that cost the most. Long answers and big models cost more. Orange from $0.001, red from $0.005.",
+      "description": "Orange from $0.001, red from $0.005.",
       "gridPos": {
         "x": 0,
-        "y": 25,
+        "y": 22,
         "w": 24,
         "h": 9
       },
@@ -1656,13 +1640,13 @@
       "transparent": true
     },
     {
-      "id": 14,
+      "id": 13,
       "type": "table",
       "title": "Every question, newest first",
-      "description": "Each question with the seconds it kept the model busy, the CPU it used, and the cost split. Click a column title to sort, or the funnel to filter by chat or person. The first question after a chat starts also pays for loading the model.",
+      "description": "First question after a start includes loading the model.",
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 31,
         "w": 24,
         "h": 10
       },
@@ -2039,26 +2023,26 @@
       "transparent": true
     },
     {
-      "id": 15,
+      "id": 14,
       "type": "row",
       "title": "Prices",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 44,
+        "y": 41,
         "w": 24,
         "h": 1
       },
       "panels": []
     },
     {
-      "id": 16,
+      "id": 15,
       "type": "table",
       "title": "Price list (per hour)",
-      "description": "AWS on-demand list prices, Linux, us-west-2, read with the AWS Pricing API on 2026-10-09. The GPU is worth the difference to the same machine without a GPU (m6a.2xlarge, $0.3456/h).",
+      "description": "AWS on-demand, us-west-2, 2026-10-09.",
       "gridPos": {
         "x": 0,
-        "y": 45,
+        "y": 42,
         "w": 12,
         "h": 11
       },
@@ -2184,22 +2168,6 @@
       "options": {
         "showHeader": true,
         "cellHeight": "sm"
-      },
-      "transparent": true
-    },
-    {
-      "id": 17,
-      "type": "text",
-      "title": "How the cost is worked out",
-      "gridPos": {
-        "x": 12,
-        "y": 45,
-        "w": 12,
-        "h": 11
-      },
-      "options": {
-        "mode": "markdown",
-        "content": "- **Chat total** = GPU memory kept for it x GPU price x time, plus CPU and memory it really used.\n- **Question** = its share of GPU x the seconds it kept the model busy (answer, title, follow-ups, reading documents), plus CPU and memory in those seconds.\n- **Idle** = total minus questions: what the chat cost while nobody used it.\n- GPU seconds are measured per call. CPU and memory per question are estimated from 15 second samples.\n- The first question after a chat starts also pays for loading the model, so it costs more.\n- Platform cost (HKS master, disks) is shared and not charged to chats."
       },
       "transparent": true
     }
