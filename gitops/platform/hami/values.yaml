@@ -15,6 +15,7 @@ devicePlugin:
   deviceSplitCount: 6
   # GPU nodes, as labelled by the GPU Operator (no manual label needed after a rebuild)
   nvidiaNodeSelector:
+    gpu: null
     nvidia.com/gpu.present: "true"
   service:
     type: ClusterIP
