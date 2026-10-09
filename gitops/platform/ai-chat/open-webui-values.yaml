@@ -1,0 +1,36 @@
+# Open WebUI: the chat page at https://chat.<domain>, talking to Ollama inside the cluster.
+# The admin login comes from the secret "open-webui-admin", made by scripts/bootstrap-gitops.sh, never stored in Git.
+ollama:
+  enabled: false
+ollamaUrls:
+  - http://ollama.ai-chat.svc.cluster.local:11434
+
+pipelines:
+  enabled: false
+
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: local-path
+
+ingress:
+  enabled: true
+  class: traefik
+  host: chat.kubeforge.live
+  tls: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+
+extraEnvVars:
+  - name: WEBUI_NAME
+    value: HKS Private AI
+  - name: ENABLE_SIGNUP
+    value: "false"
+  - name: ENABLE_OPENAI_API
+    value: "false"
+  - name: DEFAULT_MODELS
+    value: llama3.2:3b
+
+extraEnvFrom:
+  - secretRef:
+      name: open-webui-admin
