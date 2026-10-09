@@ -10,3 +10,6 @@ configMapGenerator:
   - name: dashboard-ai-chats
     files:
       - ai-chats.json
+  - name: dashboard-ai-cost
+    files:
+      - ai-cost.json

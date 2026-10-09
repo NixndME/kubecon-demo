@@ -1,0 +1,2207 @@
+{
+  "uid": "ai-cost",
+  "title": "AI cost",
+  "tags": [
+    "ai",
+    "cost",
+    "kubecon-demo"
+  ],
+  "timezone": "browser",
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "schemaVersion": 39,
+  "editable": true,
+  "graphTooltip": 1,
+  "description": "What the AI chats cost, per chat and per question, with AWS prices.",
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### What the AI chats cost\nEvery chat pays for its share of GPU memory all the time, plus the CPU and memory it uses. A question costs the seconds it keeps the model busy. **Questions + idle = total** for every chat. Prices are AWS on-demand list prices for the GPU node (g4dn.2xlarge, us-west-2), split into GPU, CPU and memory. Numbers follow the time range at the top right."
+      },
+      "transparent": true
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total cost",
+      "description": "What all chats cost in this time range: questions plus idle.",
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total - (ai_chat_cost_dollars_total offset $__range or ai_chat_cost_dollars_total * 0))))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "transparent": true
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Questions",
+      "description": "What the questions cost: the seconds each one kept the model busy, plus CPU and memory.",
+      "gridPos": {
+        "x": 4,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0))))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "transparent": true
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Idle",
+      "description": "What the chats cost while nobody asked anything: GPU memory kept for them.",
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total - (ai_chat_cost_dollars_total offset $__range or ai_chat_cost_dollars_total * 0)))) - sum(sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0)))))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "transparent": true
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Questions asked",
+      "description": "Questions priced in this time range.",
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(sum by (chat, owner, size, model) ((ai_chat_questions_total - (ai_chat_questions_total offset $__range or ai_chat_questions_total * 0))))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "transparent": true
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Cost per question",
+      "description": "Average cost of one question.",
+      "gridPos": {
+        "x": 16,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0)))) / sum(sum by (chat, owner, size, model) ((ai_chat_questions_total - (ai_chat_questions_total offset $__range or ai_chat_questions_total * 0)))))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 5,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "transparent": true
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "GPU machine cost",
+      "description": "What the whole GPU node cost in this time range, used or not.",
+      "gridPos": {
+        "x": 20,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(scalar(ai_price_dollars_per_hour{item=\"gpu_node\"}) * $__range_s / 3600)",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      },
+      "transparent": true
+    },
+    {
+      "id": 8,
+      "type": "row",
+      "title": "Cost per chat: who uses what",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Cost per chat",
+      "description": "Questions + idle = total. Usage is how much of its running time the chat was busy answering. CPU per GPU second above 2.5 means the model does not fit its size and runs partly on the CPU.",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (chat, owner, size, model) ((ai_chat_questions_total - (ai_chat_questions_total offset $__range or ai_chat_questions_total * 0)))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0)))",
+          "refId": "B",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(100 * sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0))) / sum by (chat, owner, size, model) ((ai_chat_running_seconds_total - (ai_chat_running_seconds_total offset $__range or ai_chat_running_seconds_total * 0))))",
+          "refId": "D",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "((sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total{part=\"cpu\"} - (ai_chat_question_cost_dollars_total{part=\"cpu\"} offset $__range or ai_chat_question_cost_dollars_total{part=\"cpu\"} * 0))) / scalar(ai_price_dollars_per_hour{item=\"vcpu\"}) * 3600) / sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0))))",
+          "refId": "E",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total - (ai_chat_cost_dollars_total offset $__range or ai_chat_cost_dollars_total * 0)))",
+          "refId": "F",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0)))",
+          "refId": "G",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total - (ai_chat_cost_dollars_total offset $__range or ai_chat_cost_dollars_total * 0))) - sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0))))",
+          "refId": "H",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(100 * (sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total - (ai_chat_cost_dollars_total offset $__range or ai_chat_cost_dollars_total * 0))) - sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0)))) / sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total - (ai_chat_cost_dollars_total offset $__range or ai_chat_cost_dollars_total * 0))))",
+          "refId": "I",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0))) / sum by (chat, owner, size, model) ((ai_chat_questions_total - (ai_chat_questions_total offset $__range or ai_chat_questions_total * 0))))",
+          "refId": "J",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(((sum by (chat, owner, size, model) ((ai_chat_questions_total - (ai_chat_questions_total offset $__range or ai_chat_questions_total * 0)))) == bool 0) * 1 + ((sum by (chat, owner, size, model) ((ai_chat_questions_total - (ai_chat_questions_total offset $__range or ai_chat_questions_total * 0)))) > bool 0) * ((((100 * sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0))) / sum by (chat, owner, size, model) ((ai_chat_running_seconds_total - (ai_chat_running_seconds_total offset $__range or ai_chat_running_seconds_total * 0))))) < bool 5) * 2 + (((100 * sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0))) / sum by (chat, owner, size, model) ((ai_chat_running_seconds_total - (ai_chat_running_seconds_total offset $__range or ai_chat_running_seconds_total * 0))))) >= bool 5) * (((((sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total{part=\"cpu\"} - (ai_chat_question_cost_dollars_total{part=\"cpu\"} offset $__range or ai_chat_question_cost_dollars_total{part=\"cpu\"} * 0))) / scalar(ai_price_dollars_per_hour{item=\"vcpu\"}) * 3600) / sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0))))) > bool 2.5) * 3 + ((((sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total{part=\"cpu\"} - (ai_chat_question_cost_dollars_total{part=\"cpu\"} offset $__range or ai_chat_question_cost_dollars_total{part=\"cpu\"} * 0))) / scalar(ai_price_dollars_per_hour{item=\"vcpu\"}) * 3600) / sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0))))) <= bool 2.5) * ((((100 * sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0))) / sum by (chat, owner, size, model) ((ai_chat_running_seconds_total - (ai_chat_running_seconds_total offset $__range or ai_chat_running_seconds_total * 0))))) > bool 40) * 5 + (((100 * sum by (chat, owner, size, model) ((ai_chat_busy_seconds_total - (ai_chat_busy_seconds_total offset $__range or ai_chat_busy_seconds_total * 0))) / sum by (chat, owner, size, model) ((ai_chat_running_seconds_total - (ai_chat_running_seconds_total offset $__range or ai_chat_running_seconds_total * 0))))) <= bool 40) * 4))))",
+          "refId": "K",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "type": "exclude",
+            "match": "any",
+            "filters": [
+              {
+                "fieldName": "Value #F",
+                "config": {
+                  "id": "lowerOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "chat": 0,
+              "owner": 1,
+              "size": 2,
+              "model": 3,
+              "Value #A": 4,
+              "Value #B": 5,
+              "Value #D": 7,
+              "Value #E": 8,
+              "Value #F": 9,
+              "Value #G": 10,
+              "Value #H": 11,
+              "Value #I": 12,
+              "Value #J": 13,
+              "Value #K": 14
+            },
+            "renameByName": {
+              "chat": "Chat",
+              "owner": "Owner",
+              "size": "Size",
+              "model": "Model",
+              "Value #A": "Questions",
+              "Value #B": "Busy",
+              "Value #D": "Usage",
+              "Value #E": "CPU per GPU s",
+              "Value #F": "Total",
+              "Value #G": "Questions cost",
+              "Value #H": "Idle",
+              "Value #I": "Idle %",
+              "Value #J": "Per question",
+              "Value #K": "Advice"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "noValue": "-"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Busy"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU per GPU s"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 105
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 2.5
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              },
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Questions cost"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Idle"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              },
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Idle %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 70
+                    },
+                    {
+                      "color": "red",
+                      "value": 90
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Per question"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 5
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Advice"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "Not used yet",
+                        "color": "text",
+                        "index": 0
+                      },
+                      "2": {
+                        "text": "Mostly idle: pick a smaller size or a time limit",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "3": {
+                        "text": "Model spills to the CPU: try Medium",
+                        "color": "red",
+                        "index": 2
+                      },
+                      "4": {
+                        "text": "Good fit",
+                        "color": "green",
+                        "index": 3
+                      },
+                      "5": {
+                        "text": "Very busy: pick a bigger size",
+                        "color": "red",
+                        "index": 4
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Chat"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 105
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Owner"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 65
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Model"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Questions"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Total",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": true,
+          "reducer": [
+            "sum"
+          ],
+          "fields": [
+            "Questions",
+            "Total",
+            "Questions cost",
+            "Idle"
+          ]
+        }
+      },
+      "transparent": true
+    },
+    {
+      "id": 10,
+      "type": "barchart",
+      "title": "Questions and idle per chat",
+      "description": "Each bar is one chat's total cost. Green is what its questions cost, orange is idle.",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0)))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total - (ai_chat_cost_dollars_total offset $__range or ai_chat_cost_dollars_total * 0))) - sum by (chat, owner, size, model) ((ai_chat_question_cost_dollars_total - (ai_chat_question_cost_dollars_total offset $__range or ai_chat_question_cost_dollars_total * 0))))",
+          "refId": "B",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "owner": true,
+              "size": true,
+              "model": true
+            },
+            "renameByName": {
+              "Value #A": "Questions",
+              "Value #B": "Idle"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 3,
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Questions"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Idle"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xField": "chat",
+        "stacking": "normal",
+        "barWidth": 0.7,
+        "showValue": "never",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "transparent": true
+    },
+    {
+      "id": 11,
+      "type": "barchart",
+      "title": "Cost by part per chat",
+      "description": "GPU memory kept for the chat, CPU and memory used.",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total{part=\"gpu\"} - (ai_chat_cost_dollars_total{part=\"gpu\"} offset $__range or ai_chat_cost_dollars_total{part=\"gpu\"} * 0)))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total{part=\"cpu\"} - (ai_chat_cost_dollars_total{part=\"cpu\"} offset $__range or ai_chat_cost_dollars_total{part=\"cpu\"} * 0)))",
+          "refId": "B",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (chat, owner, size, model) ((ai_chat_cost_dollars_total{part=\"memory\"} - (ai_chat_cost_dollars_total{part=\"memory\"} offset $__range or ai_chat_cost_dollars_total{part=\"memory\"} * 0)))",
+          "refId": "C",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "owner": true,
+              "size": true,
+              "model": true
+            },
+            "renameByName": {
+              "Value #A": "GPU",
+              "Value #B": "CPU",
+              "Value #C": "Memory"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 3,
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#5794F2"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8e8e8e"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xField": "chat",
+        "stacking": "normal",
+        "barWidth": 0.7,
+        "showValue": "never",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "transparent": true
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "Every question",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 13,
+      "type": "table",
+      "title": "Most expensive questions",
+      "description": "The questions that cost the most. Long answers and big models cost more. Orange from $0.001, red from $0.005.",
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{namespace=\"chat-cost\"} |= \"\\\"type\\\": \\\"question\\\"\"",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "Line",
+            "format": "json",
+            "replace": true,
+            "keepTime": false
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "asked",
+                "destinationType": "time"
+              }
+            ]
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "busy_seconds",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cpu_seconds",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "memory_gb",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cost_gpu",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cost_cpu",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cost_memory",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cost",
+                "destinationType": "number"
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "includeByName": {
+              "asked": true,
+              "chat": true,
+              "who": true,
+              "size": true,
+              "model": true,
+              "question": true,
+              "busy_seconds": true,
+              "cpu_seconds": true,
+              "memory_gb": true,
+              "cost_gpu": true,
+              "cost_cpu": true,
+              "cost_memory": true,
+              "cost": true
+            },
+            "indexByName": {
+              "asked": 0,
+              "chat": 1,
+              "who": 2,
+              "size": 3,
+              "model": 4,
+              "question": 5,
+              "busy_seconds": 6,
+              "cpu_seconds": 7,
+              "memory_gb": 8,
+              "cost_gpu": 9,
+              "cost_cpu": 10,
+              "cost_memory": 11,
+              "cost": 12
+            },
+            "renameByName": {
+              "asked": "Asked",
+              "chat": "Chat",
+              "who": "Who",
+              "size": "Size",
+              "model": "Model",
+              "question": "Question",
+              "busy_seconds": "GPU s",
+              "cpu_seconds": "CPU s",
+              "memory_gb": "Memory GB",
+              "cost_gpu": "GPU $",
+              "cost_cpu": "CPU $",
+              "cost_memory": "Memory $",
+              "cost": "Cost"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU s"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU s"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory GB"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU $"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 6
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU $"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 6
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory $"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 6
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 5
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.001
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.005
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Asked"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 165
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Chat"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Who"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 65
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Model"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 105
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Cost",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": true,
+          "reducer": [
+            "sum"
+          ],
+          "fields": [
+            "GPU s",
+            "CPU s",
+            "Cost"
+          ]
+        }
+      },
+      "transparent": true
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Every question, newest first",
+      "description": "Each question with the seconds it kept the model busy, the CPU it used, and the cost split. Click a column title to sort, or the funnel to filter by chat or person. The first question after a chat starts also pays for loading the model.",
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{namespace=\"chat-cost\"} |= \"\\\"type\\\": \\\"question\\\"\"",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "Line",
+            "format": "json",
+            "replace": true,
+            "keepTime": false
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "asked",
+                "destinationType": "time"
+              }
+            ]
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "busy_seconds",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cpu_seconds",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "memory_gb",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cost_gpu",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cost_cpu",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cost_memory",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "cost",
+                "destinationType": "number"
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "includeByName": {
+              "asked": true,
+              "chat": true,
+              "who": true,
+              "size": true,
+              "model": true,
+              "question": true,
+              "busy_seconds": true,
+              "cpu_seconds": true,
+              "memory_gb": true,
+              "cost_gpu": true,
+              "cost_cpu": true,
+              "cost_memory": true,
+              "cost": true
+            },
+            "indexByName": {
+              "asked": 0,
+              "chat": 1,
+              "who": 2,
+              "size": 3,
+              "model": 4,
+              "question": 5,
+              "busy_seconds": 6,
+              "cpu_seconds": 7,
+              "memory_gb": 8,
+              "cost_gpu": 9,
+              "cost_cpu": 10,
+              "cost_memory": 11,
+              "cost": 12
+            },
+            "renameByName": {
+              "asked": "Asked",
+              "chat": "Chat",
+              "who": "Who",
+              "size": "Size",
+              "model": "Model",
+              "question": "Question",
+              "busy_seconds": "GPU s",
+              "cpu_seconds": "CPU s",
+              "memory_gb": "Memory GB",
+              "cost_gpu": "GPU $",
+              "cost_cpu": "CPU $",
+              "cost_memory": "Memory $",
+              "cost": "Cost"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU s"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU s"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory GB"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU $"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 6
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU $"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 6
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory $"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 6
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 5
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.001
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.005
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Asked"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 165
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Chat"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Who"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 65
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Model"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 105
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Asked",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": true,
+          "reducer": [
+            "sum"
+          ],
+          "fields": [
+            "GPU s",
+            "CPU s",
+            "Cost"
+          ]
+        }
+      },
+      "transparent": true
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Prices",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 16,
+      "type": "table",
+      "title": "Price list (per hour)",
+      "description": "AWS on-demand list prices, Linux, us-west-2, read with the AWS Pricing API on 2026-10-09. The GPU is worth the difference to the same machine without a GPU (m6a.2xlarge, $0.3456/h).",
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 12,
+        "h": 11
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "ai_price_dollars_per_hour",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "container": true,
+              "endpoint": true,
+              "instance": true,
+              "job": true,
+              "namespace": true,
+              "pod": true,
+              "service": true
+            },
+            "renameByName": {
+              "item": "Item",
+              "Value": "Per hour"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Per hour"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Item"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "gpu_node": {
+                        "text": "GPU node g4dn.2xlarge (whole machine)",
+                        "index": 0
+                      },
+                      "gpu": {
+                        "text": "GPU (one T4, 15 GB)",
+                        "index": 1
+                      },
+                      "gpu_memory_gb": {
+                        "text": "1 GB of GPU memory",
+                        "index": 2
+                      },
+                      "vcpu": {
+                        "text": "1 vCPU",
+                        "index": 3
+                      },
+                      "memory_gb": {
+                        "text": "1 GB of memory",
+                        "index": 4
+                      },
+                      "platform": {
+                        "text": "Platform: HKS master and disks",
+                        "index": 5
+                      },
+                      "size_small": {
+                        "text": "Small chat (3 GB GPU memory)",
+                        "index": 6
+                      },
+                      "size_medium": {
+                        "text": "Medium chat (4 GB GPU memory)",
+                        "index": 7
+                      },
+                      "size_large": {
+                        "text": "Large chat (8 GB GPU memory)",
+                        "index": 8
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transparent": true
+    },
+    {
+      "id": 17,
+      "type": "text",
+      "title": "How the cost is worked out",
+      "gridPos": {
+        "x": 12,
+        "y": 45,
+        "w": 12,
+        "h": 11
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "- **Chat total** = GPU memory kept for it x GPU price x time, plus CPU and memory it really used.\n- **Question** = its share of GPU x the seconds it kept the model busy (answer, title, follow-ups, reading documents), plus CPU and memory in those seconds.\n- **Idle** = total minus questions: what the chat cost while nobody used it.\n- GPU seconds are measured per call. CPU and memory per question are estimated from 15 second samples.\n- The first question after a chat starts also pays for loading the model, so it costs more.\n- Platform cost (HKS master, disks) is shared and not charged to chats."
+      },
+      "transparent": true
+    }
+  ]
+}

@@ -35,7 +35,7 @@ GPU_GB_H = GPU_H / gpu_mem_gb
 
 lock = Lock()
 # Bump when the way questions are priced changes: the recorder then starts fresh
-STATE_VERSION = 5
+STATE_VERSION = 6
 state = {"version": STATE_VERSION, "since_ns": 0, "chats": {}}
 
 
@@ -120,7 +120,7 @@ def chat(ns, info):
     return c
 
 
-def record(ns, q, calls, info):
+def record(ns, q, calls, info, asked_ns):
     """Price one question from its model server calls."""
     busy = sum(d for _, d, _ in calls)
     end = max(t for t, _, _ in calls) / 1e9
@@ -132,7 +132,8 @@ def record(ns, q, calls, info):
     c = chat(ns, info)
     c["q_gpu"] += cost["gpu"]; c["q_cpu"] += cost["cpu"]; c["q_mem"] += cost["mem"]
     c["questions"] += 1; c["busy"] += busy
-    print(json.dumps({"type": "question", "chat": ns, "who": q["who"], "model": q["model"] or c["labels"].get("model", ""),
+    asked = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(asked_ns / 1e9))
+    print(json.dumps({"type": "question", "asked": asked, "chat": ns, "who": q["who"], "model": q["model"] or c["labels"].get("model", ""),
                       "size": c["labels"].get("size", ""), "question": q["question"], "calls": len(calls),
                       "busy_seconds": round(busy, 3), "cpu_seconds": round(cores * busy, 3), "memory_gb": round(mem, 2),
                       "gpu_gb_booked": round(gpu_gb, 2), "cost_gpu": round(cost["gpu"], 8), "cost_cpu": round(cost["cpu"], 8),
@@ -217,7 +218,7 @@ def step():
                             taken.add(k); owned[n].append(c)
             for n, (ts, q) in enumerate(qs):
                 if since <= ts < until and owned[n]:
-                    record(ns, q, [(c[0], c[2], c[3]) for c in owned[n]], info.get(ns, {}))
+                    record(ns, q, [(c[0], c[2], c[3]) for c in owned[n]], info.get(ns, {}), ts)
         state["since_ns"] = until
         json.dump(state, open(STATE + ".tmp", "w"))
         os.replace(STATE + ".tmp", STATE)
