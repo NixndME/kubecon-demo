@@ -2,7 +2,7 @@
 # First install of cert-manager, Traefik and Argo CD on a new cluster, then Argo CD takes over from Git.
 # Secrets come from a local file and go straight into the cluster, never into Git.
 # Usage: KUBECONFIG=<file> scripts/bootstrap-gitops.sh <login file>
-#   login file has APPS_USER=..., APPS_PASSWORD=... and APPS_EMAIL=... (the chat app logs in with an email)
+#   login file has APPS_USER=... and APPS_PASSWORD=...
 # Needs: kubectl, helm, python3 with bcrypt (pip install bcrypt).
 set -euo pipefail
 
@@ -51,18 +51,6 @@ kubectl -n argocd create secret generic argocd-secret \
 echo "==> Argo CD"
 helm upgrade --install argocd argo/argo-cd --version "$ARGOCD_VERSION" \
   -n argocd -f "$G/platform/argocd/values.yaml" --wait
-
-echo "==> Chat app admin login"
-kubectl create namespace ai-chat --dry-run=client -o yaml | kubectl apply -f -
-# Keep the session key of an existing install, so logins survive
-key=$(kubectl -n ai-chat get secret open-webui-admin -o jsonpath='{.data.WEBUI_SECRET_KEY}' 2>/dev/null | base64 -d || true)
-[ -n "$key" ] || key=$(openssl rand -hex 32)
-kubectl -n ai-chat create secret generic open-webui-admin \
-  --from-literal=WEBUI_ADMIN_EMAIL="${APPS_EMAIL:?APPS_EMAIL missing in the login file}" \
-  --from-literal=WEBUI_ADMIN_PASSWORD="$APPS_PASSWORD" \
-  --from-literal=WEBUI_ADMIN_NAME="$APPS_USER" \
-  --from-literal=WEBUI_SECRET_KEY="$key" \
-  --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> Grafana admin login"
 kubectl create namespace grafana --dry-run=client -o yaml | kubectl apply -f -
