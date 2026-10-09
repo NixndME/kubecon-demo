@@ -64,6 +64,12 @@ kubectl -n ai-chat create secret generic open-webui-admin \
   --from-literal=WEBUI_SECRET_KEY="$key" \
   --dry-run=client -o yaml | kubectl apply -f -
 
+echo "==> Grafana admin login"
+kubectl create namespace grafana --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n grafana create secret generic grafana-admin \
+  --from-literal=admin-user="$APPS_USER" --from-literal=admin-password="$APPS_PASSWORD" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
 if [ "${ROOT_APP:-0}" = 1 ]; then
   echo "==> Argo CD takes over from Git"
   kubectl apply -f "$G/root-app.yaml"

@@ -1,0 +1,61 @@
+# Grafana at https://grafana.<domain> with GPU dashboards. Reads the cluster's Prometheus.
+# The admin login comes from the secret "grafana-admin", made by scripts/bootstrap-gitops.sh, never stored in Git.
+admin:
+  existingSecret: grafana-admin
+
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClassName: local-path
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+  hosts:
+    - grafana.kubeforge.live
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.kubeforge.live
+
+grafana.ini:
+  server:
+    root_url: https://grafana.kubeforge.live
+  users:
+    allow_sign_up: false
+  auth.anonymous:
+    enabled: false
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        uid: prometheus
+        type: prometheus
+        url: http://prometheus-k8s.monitoring.svc:9090
+        access: proxy
+        isDefault: true
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: gpu
+        orgId: 1
+        folder: GPU
+        type: file
+        disableDeletion: true
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/gpu
+
+# NVIDIA's own GPU dashboard from grafana.com
+dashboards:
+  gpu:
+    nvidia-dcgm:
+      gnetId: 12239
+      revision: 2
+      datasource: Prometheus
