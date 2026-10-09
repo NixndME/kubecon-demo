@@ -90,7 +90,7 @@ reserved="argocd|grafana|chat|traefik|morpheus|k8s|ingress|www|admin|api|loki|pr
 in_name=$(upsert /api/library/option-types optionTypes name "AI first name" optionType "$(jq -n --arg d "$DOMAIN" --arg r "$reserved" '{optionType:{
   name:"AI first name", fieldName:"aiName", fieldLabel:"First name", type:"text", required:true, displayOrder:1,
   verifyPattern:("^(?!(" + $r + ")$)[a-z][a-z0-9]{1,14}$"), placeHolder:"jane",
-  helpBlock:("Lowercase, 2 to 15 letters or numbers. Your chat is named ai-<first name> and opens at https://<first name>." + $d)}}')")
+  helpBlock:("Lowercase letters or numbers. Your chat opens at https://<first name>." + $d)}}')")
 in_email=$(upsert /api/library/option-types optionTypes name "AI owner email" optionType "$(jq -n '{optionType:{
   name:"AI owner email", fieldName:"aiEmail", fieldLabel:"Email", type:"text", required:true, displayOrder:2,
   verifyPattern:"^[a-z0-9._+-]+@[a-z0-9.-]+[.][a-z]{2,}$", placeHolder:"jane@example.com",
@@ -158,12 +158,19 @@ c_order=$(upsert /api/catalog-item-types catalogItemTypes name "Private AI chat"
   --argjson i0 "$in_name" --argjson i1 "$in_email" --argjson i2 "$in_team" --argjson i3 "$in_model" --argjson i4 "$in_pass" --arg d "$DOMAIN" '{catalogItemType:{
   name:"Private AI chat", type:"blueprint", blueprint:{id:$b}, appSpec:$s, optionTypes:[$i0,$i1,$i4,$i2,$i3],
   enabled:true, featured:true, visibility:"public",
-  description:"Your own AI chat on the HKS GPU, at https://<first name>." + $d,
-  content:("## Private AI chat\n\nYour own chat page at **https://<first name>." + $d + "**, running a small AI model on one slice of the HKS GPU.\n\n- Log in with **your email** and the **password** you choose here.\n- After approval it shows in **Apps** as **ai-<first name>**, with the link. The same name is used in Argo CD, Grafana and the cluster (namespace ai-<first name>).\n- The page is ready about 2 minutes later. If all GPU slices are in use, it starts when one is free.\n- Your data stays in the cluster.")}}')")
+  description:"Your own private AI chat, on a GPU in the HKS cluster.",
+  content:("**What you get**\n\n- A chat page at **https://<first name>." + $d + "**\n- The AI model you pick, on its own GPU slice\n- Your questions stay inside the cluster\n\n**How it works**\n\n1. Fill in the form and order.\n2. An admin approves.\n3. About 2 minutes later, open **Apps > ai-<first name>** for the link. Log in with your email and password.")}}')")
 c_remove=$(upsert /api/catalog-item-types catalogItemTypes name "Remove AI chat" catalogItemType "$(jq -n --argjson w "$w_remove" --argjson i "$in_chat" --argjson k "$in_confirm" '{catalogItemType:{
   name:"Remove AI chat", type:"workflow", workflow:{id:$w}, context:"appliance", optionTypes:[$i,$k],
   enabled:true, featured:false, visibility:"public",
-  description:"Removes an AI chat and frees its GPU slice.", content:"Pick a chat, then type its app name (for example ai-jane) to confirm. Its page, model server, GPU slice, namespace and Morpheus app are removed."}}')")
+  description:"Remove an AI chat you no longer need.",
+  content:"**What happens**\n\n- The chat page, its model and its GPU slice are removed.\n- The chat history is deleted.\n\n**How**\n\nPick the chat, type its name (for example ai-jane) to confirm, and order."}}')")
+
+echo "==> Logos"
+for c in "$c_order:ai-chat.svg" "$c_remove:remove-ai-chat.svg"; do
+  curl -sf -X PUT -H "Authorization: Bearer $MORPHEUS_TOKEN" -F "catalogItemType.logo=@$HERE/../morpheus/logos/${c#*:};type=image/svg+xml" \
+    "$M/api/catalog-item-types/${c%%:*}/update-logo" >/dev/null || echo "    could not upload the logo ${c#*:}"
+done
 
 echo "==> Role, developer user, approval"
 role=$(upsert /api/roles roles authority "AI Developer" role "$(jq -n '{role:{authority:"AI Developer",

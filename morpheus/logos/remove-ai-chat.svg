@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <rect width="200" height="200" rx="36" fill="#6B7A89"/>
+  <g stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity="0.55">
+    <line x1="62" y1="38" x2="62" y2="52"/><line x1="88" y1="38" x2="88" y2="52"/><line x1="114" y1="38" x2="114" y2="52"/><line x1="140" y1="38" x2="140" y2="52"/>
+    <line x1="62" y1="148" x2="62" y2="162"/><line x1="88" y1="148" x2="88" y2="162"/><line x1="114" y1="148" x2="114" y2="162"/><line x1="140" y1="148" x2="140" y2="162"/>
+    <line x1="38" y1="74" x2="52" y2="74"/><line x1="38" y1="100" x2="52" y2="100"/><line x1="38" y1="126" x2="52" y2="126"/>
+    <line x1="148" y1="74" x2="162" y2="74"/><line x1="148" y1="100" x2="162" y2="100"/><line x1="148" y1="126" x2="162" y2="126"/>
+  </g>
+  <rect x="52" y="52" width="96" height="96" rx="16" fill="none" stroke="#ffffff" stroke-width="6" opacity="0.55"/>
+  <path d="M70 70h60a10 10 0 0 1 10 10v30a10 10 0 0 1-10 10H96l-16 14v-14h-10a10 10 0 0 1-10-10V80a10 10 0 0 1 10-10z" fill="#ffffff"/>
+  <rect x="82" y="91" width="36" height="8" rx="4" fill="#C54E4B"/>
+</svg>
