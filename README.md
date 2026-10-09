@@ -3,9 +3,9 @@
 Everything needed to build the demo lab on AWS: an HPE Morpheus appliance, an HKS Kubernetes cluster with one
 NVIDIA GPU node, and Traefik and Argo CD on top. Argo CD keeps the cluster in line with the `gitops` folder.
 
-Developers order a private AI chat from the Morpheus catalog. After an admin approves, Argo CD runs it on its own
-slice of the GPU at `https://<first name>.<domain>`, and a Grafana dashboard shows its CPU, memory, GPU, questions
-and logs.
+Developers order a private AI chat from the Morpheus catalog. After an admin approves, Argo CD runs it at
+`https://<first name>.<domain>` with its own share of GPU memory (Small, Medium or Large), kept by HAMi. A Grafana
+dashboard shows what was ordered, started and removed, who uses how much GPU, the questions asked and the logs.
 
 No passwords, keys or Terraform state are in this repo. They stay on the machine you build from.
 
@@ -38,16 +38,26 @@ No passwords, keys or Terraform state are in this repo. They stay on the machine
 ## The AI chat, step by step
 
 - A developer opens the Service Catalog, picks "Private AI chat" and fills in first name, email, password,
-  team (optional) and model.
+  team (optional), model and size.
 - An admin approves it in Morpheus.
 - Morpheus creates the app `ai-<first name>`. It holds one Argo CD app, and Argo CD deploys
-  `gitops/charts/ai-chat` into the namespace `ai-<first name>`: Ollama with the model on one GPU slice, and
+  `gitops/charts/ai-chat` into the namespace `ai-<first name>`: Ollama with the model on its GPU share, and
   Open WebUI at `https://<first name>.<domain>`. The login is the email and password from the order.
 - The same name `ai-<first name>` is used in Morpheus, Argo CD, the namespace, Grafana and the remove list.
 - "Remove AI chat" lists the chats running now. Type the app name to confirm, an admin approves, and the chat,
   its namespace, its GPU slice and the Morpheus app are removed.
-- Grafana, dashboard "AI chats": pick a chat to see its pods, GPU slice, CPU and memory (with thresholds), the
-  shared GPU, the questions asked (who, model, question) and its logs. Logs come from Loki.
+- Grafana, dashboard "AI chats": orders, starts and removals (7 days), running chats with owner, model, size and
+  GPU memory booked and used, the GPU, the questions asked (who, model, question) and the logs of one chat.
+
+## Sharing the GPU (HAMi)
+
+- [HAMi](https://github.com/Project-HAMi/HAMi) shares the GPU with real limits. Each chat gets a fixed amount of GPU
+  memory and can not use more, so one chat can never crash another.
+- Sizes: Small 3 GB, Medium 5 GB (the 3B models run fully on the GPU), Large 8 GB (for the 8B model).
+  Compute is shared: a chat can use the whole GPU when the others are idle.
+- How many chats fit depends on GPU memory. The T4 (15 GB) holds 5 Small chats. A bigger GPU holds more.
+- When the GPU is full, a new chat waits and starts by itself as soon as another chat is removed.
+- HAMi replaces the GPU Operator's device plugin. It uses the `nvidia-legacy` runtime class from the GPU Operator.
 
 ## Build it
 
