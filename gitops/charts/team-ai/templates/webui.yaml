@@ -27,6 +27,7 @@ spec:
       labels:
         app: webui
         {{- include "team-ai.labels" . | nindent 8 }}
+      annotations: {{- include "team-ai.annotations" . | nindent 8 }}
     spec:
       containers:
         - name: webui
