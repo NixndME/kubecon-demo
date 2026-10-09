@@ -1,0 +1,117 @@
+# Read-only access for the Morpheus "AI on HKS" dashboard: query Prometheus and Loki through the Kubernetes API,
+# list nodes and Argo CD apps. Nothing else. The setup script reads the token and puts it in the plugin settings.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: morpheus-dashboard
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: morpheus-dashboard
+  namespace: morpheus-dashboard
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: morpheus-dashboard-token
+  namespace: morpheus-dashboard
+  annotations:
+    kubernetes.io/service-account.name: morpheus-dashboard
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: morpheus-dashboard
+  namespace: monitoring
+rules:
+  - apiGroups: [""]
+    resources: ["services/proxy"]
+    resourceNames: ["prometheus-k8s", "prometheus-k8s:9090", "http:prometheus-k8s:9090"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: morpheus-dashboard
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: morpheus-dashboard
+subjects:
+  - kind: ServiceAccount
+    name: morpheus-dashboard
+    namespace: morpheus-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: morpheus-dashboard
+  namespace: loki
+rules:
+  - apiGroups: [""]
+    resources: ["services/proxy"]
+    resourceNames: ["loki", "loki:3100", "http:loki:3100"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: morpheus-dashboard
+  namespace: loki
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: morpheus-dashboard
+subjects:
+  - kind: ServiceAccount
+    name: morpheus-dashboard
+    namespace: morpheus-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: morpheus-dashboard
+  namespace: argocd
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: morpheus-dashboard
+  namespace: argocd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: morpheus-dashboard
+subjects:
+  - kind: ServiceAccount
+    name: morpheus-dashboard
+    namespace: morpheus-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: morpheus-dashboard
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: morpheus-dashboard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: morpheus-dashboard
+subjects:
+  - kind: ServiceAccount
+    name: morpheus-dashboard
+    namespace: morpheus-dashboard
