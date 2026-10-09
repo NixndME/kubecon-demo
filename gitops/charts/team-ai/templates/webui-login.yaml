@@ -1,0 +1,14 @@
+# The chat's own login: <team>@<domain> and the password chosen in the order
+{{- if not .Values.chatPassword }}{{ fail "chatPassword is required" }}{{ end }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: webui-login
+  labels: {{- include "team-ai.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  WEBUI_ADMIN_EMAIL: {{ printf "%s@%s" .Values.team .Values.domain | quote }}
+  WEBUI_ADMIN_PASSWORD: {{ .Values.chatPassword | quote }}
+  WEBUI_ADMIN_NAME: {{ .Values.team | quote }}
+  # Stable session key, so logins survive restarts
+  WEBUI_SECRET_KEY: {{ printf "%s-%s-team-ai" .Values.team .Values.chatPassword | sha256sum | quote }}

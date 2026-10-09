@@ -2,10 +2,10 @@
 team: demo
 model: llama3.2:3b
 requestedBy: ""
+# The developer picks this password when ordering; the chat login is <team>@<domain>
+chatPassword: ""
 
 domain: kubeforge.live
-# Login prompt with the same user as the Traefik dashboard (secret made by scripts/bootstrap-gitops.sh)
-loginMiddleware: traefik-team-login@kubernetescrd
 
 ollama:
   image: ollama/ollama:0.40.0

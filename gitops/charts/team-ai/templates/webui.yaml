@@ -1,4 +1,4 @@
-# Open WebUI: the team's chat page at https://<team>.<domain>, behind the shared login prompt
+# Open WebUI: the team's chat page at https://<team>.<domain>, with its own login
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -37,15 +37,17 @@ spec:
               value: http://ollama:11434
             - name: WEBUI_NAME
               value: {{ printf "%s AI" (.Values.team | title) | quote }}
-            # One user per team; the login prompt in front of the page protects it
-            - name: WEBUI_AUTH
-              value: "False"
+            - name: ENABLE_SIGNUP
+              value: "false"
             - name: ENABLE_OPENAI_API
               value: "false"
             - name: ENABLE_EVALUATION_ARENA_MODELS
               value: "false"
             - name: DEFAULT_MODELS
               value: {{ .Values.model | quote }}
+          envFrom:
+            - secretRef:
+                name: webui-login
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -81,7 +83,6 @@ metadata:
   labels: {{- include "team-ai.labels" . | nindent 4 }}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.loginMiddleware }}
 spec:
   ingressClassName: traefik
   tls:
